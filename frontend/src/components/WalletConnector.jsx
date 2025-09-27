@@ -11,13 +11,24 @@ function WalletConnector() {
       <div className="text-center">
         <div className="mb-6">
           <div className="w-24 h-24 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full mx-auto flex items-center justify-center mb-6">
-            <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            <svg
+              className="w-12 h-12 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
             </svg>
           </div>
           <h2 className="text-4xl font-bold text-white mb-4">Connect Your Wallet</h2>
           <p className="text-gray-300 text-lg">
-            Connect your Web3 wallet to start creating your Universal Web3 Identity
+            Connect your Web3 wallet (MetaMask, WalletConnect, or other)
+            to start creating your Universal Web3 Identity
           </p>
         </div>
 
@@ -29,7 +40,7 @@ function WalletConnector() {
             >
               Connect Wallet
             </button>
-            
+
             <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-4">
               <div className="text-sm text-blue-300">
                 <p className="font-semibold mb-2">🔒 What happens next:</p>
