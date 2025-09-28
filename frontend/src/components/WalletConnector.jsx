@@ -13,9 +13,11 @@ export default function WalletConnector() {
       </h2>
       {!isConnected ? (
         <>
-          <button onClick={() => open()} className="bg-green-500 text-black px-10 py-4 font-mono font-bold rounded hover:bg-green-600 transition">
-            Connect Wallet
-          </button>
+          <div className='flex justify-center items-center'>
+            <button onClick={() => open()} className="bg-green-500 text-black px-10 py-4 font-mono font-bold rounded hover:bg-green-600 transition">
+              Connect Wallet
+            </button>
+          </div>
           <p className="mt-5 text-green-600">
             Connect MetaMask, WalletConnect or others
           </p>
