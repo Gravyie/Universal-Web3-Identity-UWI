@@ -1,1 +1,177 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* ── Tokens ──────────────────────────────────────────────────────────────
+   Two surfaces (Ink = dark, Paper = light) × four accents. Accents get a
+   brighter fill for dark mode and a deeper one for light mode so text on
+   either background keeps its contrast. */
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f3f0e8;
+  --bg-elev: #faf8f3;
+  --surface: #ffffff;
+  --surface-2: #ece8de;
+  --line: rgb(22 22 26 / 0.09);
+  --line-strong: rgb(22 22 26 / 0.18);
+  --text: #16161a;
+  --text-2: #4a4a50;
+  --muted: #7a7872;
+  --danger: #c2372b;
+  --warn: #a86a00;
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.7) inset, 0 20px 50px -24px rgb(40 30 10 / 0.25);
+  --card-ink: #16161a;
+  --grain-opacity: 0.05;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0b0c0e;
+  --bg-elev: #111215;
+  --surface: #15161a;
+  --surface-2: #1c1d22;
+  --line: rgb(255 255 255 / 0.07);
+  --line-strong: rgb(255 255 255 / 0.14);
+  --text: #edebe4;
+  --text-2: #b9b7b0;
+  --muted: #85847f;
+  --danger: #ff6b5e;
+  --warn: #f2b84b;
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 30px 60px -30px rgb(0 0 0 / 0.8);
+  --card-ink: #edebe4;
+  --grain-opacity: 0.035;
+}
+
+[data-accent='verdigris'] { --accent: #0e8a68; --accent-soft: rgb(14 138 104 / 0.11); --on-accent: #ffffff; }
+[data-accent='iris']      { --accent: #4f50d1; --accent-soft: rgb(79 80 209 / 0.11);  --on-accent: #ffffff; }
+[data-accent='ember']     { --accent: #c24812; --accent-soft: rgb(194 72 18 / 0.11);  --on-accent: #ffffff; }
+[data-accent='gold']      { --accent: #8f6a0c; --accent-soft: rgb(143 106 12 / 0.12); --on-accent: #ffffff; }
+
+[data-theme='dark'][data-accent='verdigris'] { --accent: #34d6a6; --accent-soft: rgb(52 214 166 / 0.12); --on-accent: #04140f; }
+[data-theme='dark'][data-accent='iris']      { --accent: #9c9dff; --accent-soft: rgb(156 157 255 / 0.13); --on-accent: #0d0d2b; }
+[data-theme='dark'][data-accent='ember']     { --accent: #ff8a57; --accent-soft: rgb(255 138 87 / 0.13); --on-accent: #1f0a02; }
+[data-theme='dark'][data-accent='gold']      { --accent: #e9c46a; --accent-soft: rgb(233 196 106 / 0.13); --on-accent: #1d1503; }
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-elev: var(--bg-elev);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--text);
+  --color-ink-2: var(--text-2);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --color-warn: var(--warn);
+
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', monospace;
+  --font-display: 'Instrument Serif', ui-serif, Georgia, serif;
+
+  --shadow-card: var(--shadow);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────── */
+
+html {
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+  transition: background-color 0.35s ease;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  font-family: var(--font-sans);
+  font-feature-settings: 'ss01', 'cv11';
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Film grain over the whole page — keeps flat surfaces from looking digital. */
+.grain::after {
+  content: '';
+  position: fixed;
+  inset: -50%;
+  z-index: 60;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── Utilities ─────────────────────────────────────────────────────────── */
+
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+@utility hairline-grid {
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.85); opacity: 0.7; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+.animate-spin-slow { animation: spin-slow 120s linear infinite; }
+.animate-spin-slower { animation: spin-slow 200s linear infinite reverse; }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--line-strong) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* AppKit's modal sits above our grain layer. */
+w3m-modal { z-index: 80; }

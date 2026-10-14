@@ -1,57 +1,35 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './components/App'
+import { BrowserRouter } from 'react-router-dom'
+import { WagmiProvider } from 'wagmi'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { MotionConfig } from 'motion/react'
+
+import '@fontsource-variable/geist'
+import '@fontsource-variable/geist-mono'
+import '@fontsource/instrument-serif/400.css'
+import '@fontsource/instrument-serif/400-italic.css'
 import './index.css'
 
-// Reown AppKit imports
-import { createAppKit } from '@reown/appkit/react'
-import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
-import { WagmiProvider } from 'wagmi'
-import { arbitrum, mainnet, polygon, celo, celoAlfajores } from '@reown/appkit/networks'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-
-const projectId = import.meta.env.VITE_REOWN_PROJECT_ID || 'demo-project-id'
-
-const hederaTestnet = {
-  id: 296,
-  name: 'Hedera Testnet',
-  network: 'hedera-testnet',
-  nativeCurrency: { name: 'HBAR', symbol: 'HBAR', decimals: 18 },
-  rpcUrls: {
-    default: { http: ['https://testnet.hashio.io/api'] },
-  },
-  blockExplorers: {
-    default: { name: 'Hedera Explorer', url: 'https://hashscan.io/testnet' },
-  },
-}
-
-const networks = [mainnet, arbitrum, polygon, celo, celoAlfajores, hederaTestnet]
-
-const wagmiAdapter = new WagmiAdapter({
-  networks,
-  projectId,
-})
-
-createAppKit({
-  adapters: [wagmiAdapter],
-  networks,
-  projectId,
-  metadata: {
-    name: 'Universal Web3 Identity',
-    description: 'Create your Sybil-resistant Web3 identity',
-    url: 'https://uwi.app',
-    icons: ['https://uwi.app/icon.png'],
-  },
-})
-
-const queryClient = new QueryClient()
+import { wagmiAdapter, queryClient } from './config/web3'
+import { ThemeProvider } from './theme/ThemeProvider'
+import { ToastProvider } from './components/ui/Toast'
+import App from './App'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <App />
+        <ThemeProvider>
+          <MotionConfig reducedMotion="user">
+            <ToastProvider>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </ToastProvider>
+          </MotionConfig>
+        </ThemeProvider>
       </QueryClientProvider>
     </WagmiProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 )

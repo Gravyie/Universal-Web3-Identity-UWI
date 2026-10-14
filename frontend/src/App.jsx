@@ -1,47 +1,75 @@
-// import React, { useState } from 'react'
-// import WalletConnector from './components/WalletConnector'
-// import IdentityForm from './components/IdentityForm'
-// import IdentityDisplay from './components/IdentityDisplay'
+import { lazy, Suspense, useEffect } from 'react'
+import { Route, Routes, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion } from 'motion/react'
+import { Header } from './components/Header'
+import { Footer } from './components/Footer'
+import { ContractBanner } from './components/ContractBanner'
+import { Spinner } from './components/ui/Spinner'
+import Home from './pages/Home'
 
-// function App() {
-//   const [currentStep, setCurrentStep] = useState('connect') // connect, form, display
-//   const [userIdentity, setUserIdentity] = useState(null)
+// The Self SDK alone is ~550 kB, so everything past the landing page loads on demand.
+const Create = lazy(() => import('./pages/Create'))
+const Credential = lazy(() => import('./pages/Credential'))
+const Lookup = lazy(() => import('./pages/Lookup'))
+const NotFound = lazy(() => import('./pages/NotFound'))
 
-//   const handleWalletConnected = () => {
-//     setCurrentStep('form')
-//   }
+function ScrollManager() {
+  const { pathname, hash } = useLocation()
+  useEffect(() => {
+    if (hash) {
+      // Wait a frame so the target section exists after a route change.
+      requestAnimationFrame(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' }))
+    } else {
+      window.scrollTo(0, 0)
+    }
+  }, [pathname, hash])
+  return null
+}
 
-//   const handleIdentityCreated = (identity) => {
-//     setUserIdentity(identity)
-//     setCurrentStep('display')
-//   }
+function PageFallback() {
+  return (
+    <div className="grid min-h-[60vh] place-items-center text-muted">
+      <Spinner />
+    </div>
+  )
+}
 
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-//       <div className="container mx-auto px-4 py-8">
-//         <div className="text-center mb-12">
-//           <h1 className="text-5xl font-bold text-white mb-4">
-//             Universal Web3 Identity
-//           </h1>
-//           <p className="text-xl text-gray-300">
-//             Create your unified digital identity for the decentralized web
-//           </p>
-//         </div>
+export default function App() {
+  const location = useLocation()
 
-//         <div className="max-w-2xl mx-auto">
-//           {currentStep === 'connect' && (
-//             <WalletConnector onWalletConnected={handleWalletConnected} />
-//           )}
-//           {currentStep === 'form' && (
-//             <IdentityForm onIdentityCreated={handleIdentityCreated} />
-//           )}
-//           {currentStep === 'display' && (
-//             <IdentityDisplay identity={userIdentity} />
-//           )}
-//         </div>
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default App
+  return (
+    <div className="grain flex min-h-dvh flex-col">
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-full bg-accent px-4 py-2 text-on-accent focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      >
+        Skip to content
+      </a>
+      <ScrollManager />
+      <ContractBanner />
+      <Header />
+      <main id="main" className="flex-1">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <Suspense fallback={<PageFallback />}>
+              <Routes location={location}>
+                <Route path="/" element={<Home />} />
+                <Route path="/create" element={<Create />} />
+                <Route path="/id/:address" element={<Credential />} />
+                <Route path="/verify" element={<Lookup />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </motion.div>
+        </AnimatePresence>
+      </main>
+      <Footer />
+    </div>
+  )
+}
