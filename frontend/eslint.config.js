@@ -30,7 +30,7 @@ export default defineConfig([
       'react/jsx-uses-vars': 'error',
       'react-refresh/only-export-components': [
         'warn',
-        { allowConstantExport: true, allowExportNames: ['useTheme', 'useToast', 'useCopy'] },
+        { allowConstantExport: true, allowExportNames: ['useTheme', 'useCopy', 'openCommandMenu', 'MemberStack', 'SNIPPETS'] },
       ],
     },
   },

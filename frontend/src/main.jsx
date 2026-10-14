@@ -4,16 +4,14 @@ import { BrowserRouter } from 'react-router-dom'
 import { WagmiProvider } from 'wagmi'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { MotionConfig } from 'motion/react'
+import * as Tooltip from '@radix-ui/react-tooltip'
 
 import '@fontsource-variable/geist'
 import '@fontsource-variable/geist-mono'
-import '@fontsource/instrument-serif/400.css'
-import '@fontsource/instrument-serif/400-italic.css'
 import './index.css'
 
 import { wagmiAdapter, queryClient } from './config/web3'
 import { ThemeProvider } from './theme/ThemeProvider'
-import { ToastProvider } from './components/ui/Toast'
 import App from './App'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -22,11 +20,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <MotionConfig reducedMotion="user">
-            <ToastProvider>
+            <Tooltip.Provider>
               <BrowserRouter>
                 <App />
               </BrowserRouter>
-            </ToastProvider>
+            </Tooltip.Provider>
           </MotionConfig>
         </ThemeProvider>
       </QueryClientProvider>

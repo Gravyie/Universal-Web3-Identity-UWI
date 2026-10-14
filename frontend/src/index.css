@@ -1,58 +1,57 @@
 @import 'tailwindcss';
+@import './components/holo/holo.css';
 
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 /* ── Tokens ──────────────────────────────────────────────────────────────
-   Two surfaces (Ink = dark, Paper = light) × four accents. Accents get a
-   brighter fill for dark mode and a deeper one for light mode so text on
-   either background keeps its contrast. */
+   Cool neutral surfaces in both themes, one accent at a time.
+   Shape system: interactive controls are full pills, inputs are 12px,
+   surfaces (cards, panels, dialogs) are 20px. Nothing else. */
 
 :root,
 [data-theme='light'] {
   color-scheme: light;
-  --bg: #f3f0e8;
-  --bg-elev: #faf8f3;
+  --bg: #f6f6f7;
+  --bg-elev: #ffffff;
   --surface: #ffffff;
-  --surface-2: #ece8de;
-  --line: rgb(22 22 26 / 0.09);
-  --line-strong: rgb(22 22 26 / 0.18);
-  --text: #16161a;
-  --text-2: #4a4a50;
-  --muted: #7a7872;
-  --danger: #c2372b;
-  --warn: #a86a00;
-  --shadow: 0 1px 0 rgb(255 255 255 / 0.7) inset, 0 20px 50px -24px rgb(40 30 10 / 0.25);
-  --card-ink: #16161a;
-  --grain-opacity: 0.05;
+  --surface-2: #efeff2;
+  --line: rgb(17 17 24 / 0.08);
+  --line-strong: rgb(17 17 24 / 0.15);
+  --text: #111114;
+  --text-2: #4a4a54;
+  --muted: #73737e;
+  --danger: #c4312b;
+  --warn: #a05a00;
+  --ok: #138a52;
+  --shadow: 0 1px 2px rgb(17 17 30 / 0.05), 0 12px 32px -16px rgb(17 17 30 / 0.18);
 }
 
 [data-theme='dark'] {
   color-scheme: dark;
-  --bg: #0b0c0e;
-  --bg-elev: #111215;
-  --surface: #15161a;
-  --surface-2: #1c1d22;
+  --bg: #0c0c0e;
+  --bg-elev: #121215;
+  --surface: #17171b;
+  --surface-2: #1f1f24;
   --line: rgb(255 255 255 / 0.07);
-  --line-strong: rgb(255 255 255 / 0.14);
-  --text: #edebe4;
-  --text-2: #b9b7b0;
-  --muted: #85847f;
-  --danger: #ff6b5e;
-  --warn: #f2b84b;
-  --shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 30px 60px -30px rgb(0 0 0 / 0.8);
-  --card-ink: #edebe4;
-  --grain-opacity: 0.035;
+  --line-strong: rgb(255 255 255 / 0.13);
+  --text: #ededf0;
+  --text-2: #b5b5be;
+  --muted: #86868f;
+  --danger: #ff6b61;
+  --warn: #f5b04a;
+  --ok: #3ddc97;
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 16px 40px -20px rgb(0 0 0 / 0.8);
 }
 
-[data-accent='verdigris'] { --accent: #0e8a68; --accent-soft: rgb(14 138 104 / 0.11); --on-accent: #ffffff; }
-[data-accent='iris']      { --accent: #4f50d1; --accent-soft: rgb(79 80 209 / 0.11);  --on-accent: #ffffff; }
-[data-accent='ember']     { --accent: #c24812; --accent-soft: rgb(194 72 18 / 0.11);  --on-accent: #ffffff; }
-[data-accent='gold']      { --accent: #8f6a0c; --accent-soft: rgb(143 106 12 / 0.12); --on-accent: #ffffff; }
+[data-accent='cobalt'] { --accent: #2f4ae0; --accent-soft: rgb(47 74 224 / 0.09); --on-accent: #ffffff; }
+[data-accent='emerald'] { --accent: #0b7f57; --accent-soft: rgb(11 127 87 / 0.09); --on-accent: #ffffff; }
+[data-accent='rose'] { --accent: #c4245a; --accent-soft: rgb(196 36 90 / 0.09); --on-accent: #ffffff; }
+[data-accent='amber'] { --accent: #a65400; --accent-soft: rgb(166 84 0 / 0.1); --on-accent: #ffffff; }
 
-[data-theme='dark'][data-accent='verdigris'] { --accent: #34d6a6; --accent-soft: rgb(52 214 166 / 0.12); --on-accent: #04140f; }
-[data-theme='dark'][data-accent='iris']      { --accent: #9c9dff; --accent-soft: rgb(156 157 255 / 0.13); --on-accent: #0d0d2b; }
-[data-theme='dark'][data-accent='ember']     { --accent: #ff8a57; --accent-soft: rgb(255 138 87 / 0.13); --on-accent: #1f0a02; }
-[data-theme='dark'][data-accent='gold']      { --accent: #e9c46a; --accent-soft: rgb(233 196 106 / 0.13); --on-accent: #1d1503; }
+[data-theme='dark'][data-accent='cobalt'] { --accent: #8299ff; --accent-soft: rgb(130 153 255 / 0.12); --on-accent: #0b1030; }
+[data-theme='dark'][data-accent='emerald'] { --accent: #3ddc97; --accent-soft: rgb(61 220 151 / 0.12); --on-accent: #03140c; }
+[data-theme='dark'][data-accent='rose'] { --accent: #ff7aa2; --accent-soft: rgb(255 122 162 / 0.12); --on-accent: #2a0612; }
+[data-theme='dark'][data-accent='amber'] { --accent: #ffb547; --accent-soft: rgb(255 181 71 / 0.12); --on-accent: #241300; }
 
 @theme inline {
   --color-bg: var(--bg);
@@ -69,16 +68,15 @@
   --color-on-accent: var(--on-accent);
   --color-danger: var(--danger);
   --color-warn: var(--warn);
+  --color-ok: var(--ok);
 
   --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', monospace;
-  --font-display: 'Instrument Serif', ui-serif, Georgia, serif;
 
   --shadow-card: var(--shadow);
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius-panel: 20px;
+  --radius-field: 12px;
 }
-
-/* ── Base ──────────────────────────────────────────────────────────────── */
 
 html {
   background: var(--bg);
@@ -86,8 +84,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  scroll-behavior: smooth;
-  transition: background-color 0.35s ease;
+  transition: background-color 0.3s ease;
 }
 
 body {
@@ -105,12 +102,10 @@ body {
 
 :focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 3px;
-  border-radius: 6px;
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
@@ -118,23 +113,21 @@ body {
   }
 }
 
-/* Film grain over the whole page — keeps flat surfaces from looking digital. */
+/* Film grain, fixed and non-interactive so it never repaints on scroll. */
 .grain::after {
   content: '';
   position: fixed;
-  inset: -50%;
-  z-index: 60;
+  inset: 0;
+  z-index: 70;
   pointer-events: none;
-  opacity: var(--grain-opacity);
+  opacity: 0.035;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* ── Utilities ─────────────────────────────────────────────────────────── */
-
-@utility eyebrow {
+@utility label {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -143,35 +136,34 @@ body {
   text-wrap: balance;
 }
 
-@utility hairline-grid {
-  background-image:
-    linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 56px 56px;
+@keyframes fade-in {
+  from { opacity: 0; }
 }
 
-@keyframes spin-slow {
-  to { transform: rotate(360deg); }
+@keyframes dialog-in {
+  from { opacity: 0; transform: scale(0.96); }
+}
+
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
 }
 
 @keyframes shimmer {
-  from { background-position: -200% 0; }
-  to { background-position: 200% 0; }
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
 }
-
-@keyframes pulse-ring {
-  0% { transform: scale(0.85); opacity: 0.7; }
-  100% { transform: scale(1.9); opacity: 0; }
-}
-
-.animate-spin-slow { animation: spin-slow 120s linear infinite; }
-.animate-spin-slower { animation: spin-slow 200s linear infinite reverse; }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--surface-2) 25%, var(--line-strong) 50%, var(--surface-2) 75%);
+  background: linear-gradient(90deg, var(--surface-2) 30%, var(--line-strong) 50%, var(--surface-2) 70%);
   background-size: 200% 100%;
-  animation: shimmer 1.6s ease-in-out infinite;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
-/* AppKit's modal sits above our grain layer. */
-w3m-modal { z-index: 80; }
+/* Layer scale: header 40, sheets/dialogs 60, grain 70, toasts 80, wallet modal 90. */
+w3m-modal { z-index: 90; }

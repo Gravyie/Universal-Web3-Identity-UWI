@@ -12,7 +12,7 @@ export function writeJSON(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value))
   } catch {
-    /* storage unavailable — state just won't survive a reload */
+    /* storage unavailable: state just won't survive a reload */
   }
 }
 

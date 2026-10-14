@@ -1,31 +1,27 @@
 import { Link } from 'react-router-dom'
 
-export function LogoMark({ className = 'size-7' }) {
+/** The UWI mark: one ring, three orbits. One human, seen from every app. */
+export function LogoMark({ className = 'size-6' }) {
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
-      <g fill="none" stroke="currentColor" strokeWidth="2.6">
-        <circle cx="32" cy="32" r="22" />
-        <ellipse cx="32" cy="32" rx="22" ry="9" />
-        <ellipse cx="32" cy="32" rx="22" ry="9" transform="rotate(60 32 32)" />
-        <ellipse cx="32" cy="32" rx="22" ry="9" transform="rotate(-60 32 32)" />
+      <g fill="none" stroke="currentColor" strokeWidth="3">
+        <circle cx="32" cy="32" r="24" />
+        <ellipse cx="32" cy="32" rx="24" ry="9.5" />
+        <ellipse cx="32" cy="32" rx="24" ry="9.5" transform="rotate(60 32 32)" />
+        <ellipse cx="32" cy="32" rx="24" ry="9.5" transform="rotate(-60 32 32)" />
       </g>
-      <circle cx="32" cy="32" r="4" fill="currentColor" />
+      <circle cx="32" cy="32" r="4.5" fill="currentColor" />
     </svg>
   )
 }
 
-export function Logo() {
+export function Logo({ to = '/' }) {
   return (
-    <Link to="/" className="group flex items-center gap-2.5" aria-label="UWI home">
-      <span className="text-accent transition-transform duration-700 ease-out group-hover:rotate-[120deg]">
+    <Link to={to} className="group flex items-center gap-2" aria-label="UWI home">
+      <span className="text-ink transition-transform duration-700 ease-out group-hover:rotate-[120deg]">
         <LogoMark />
       </span>
-      <span className="text-[17px] font-semibold tracking-[-0.03em] text-ink">
-        UWI
-        <span className="ml-2 hidden font-mono text-[10px] font-normal tracking-[0.12em] text-muted uppercase sm:inline">
-          Universal Web3 Identity
-        </span>
-      </span>
+      <span className="text-[17px] font-semibold tracking-[-0.04em] text-ink">UWI</span>
     </Link>
   )
 }

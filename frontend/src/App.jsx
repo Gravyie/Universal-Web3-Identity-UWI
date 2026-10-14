@@ -1,23 +1,29 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { Route, Routes, useLocation } from 'react-router-dom'
-import { AnimatePresence, motion } from 'motion/react'
-import { Header } from './components/Header'
-import { Footer } from './components/Footer'
-import { ContractBanner } from './components/ContractBanner'
+import { Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom'
+import { motion } from 'motion/react'
+import { Toaster } from 'sonner'
+import { SiteHeader } from './components/layout/SiteHeader'
+import { Footer } from './components/layout/Footer'
+import { AppShell } from './components/layout/AppShell'
+import { CommandMenu } from './components/layout/CommandMenu'
 import { Spinner } from './components/ui/Spinner'
+import { useTheme } from './theme/ThemeProvider'
 import Home from './pages/Home'
 
-// The Self SDK alone is ~550 kB, so everything past the landing page loads on demand.
-const Create = lazy(() => import('./pages/Create'))
-const Credential = lazy(() => import('./pages/Credential'))
-const Lookup = lazy(() => import('./pages/Lookup'))
+const Onboard = lazy(() => import('./pages/onboard/Onboard'))
+const Profile = lazy(() => import('./pages/Profile'))
+const GateJoin = lazy(() => import('./pages/GateJoin'))
+const Developers = lazy(() => import('./pages/Developers'))
 const NotFound = lazy(() => import('./pages/NotFound'))
+const Overview = lazy(() => import('./pages/app/Overview'))
+const Gates = lazy(() => import('./pages/app/Gates'))
+const GateDetail = lazy(() => import('./pages/app/GateDetail'))
+const Settings = lazy(() => import('./pages/app/Settings'))
 
 function ScrollManager() {
   const { pathname, hash } = useLocation()
   useEffect(() => {
     if (hash) {
-      // Wait a frame so the target section exists after a route change.
       requestAnimationFrame(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' }))
     } else {
       window.scrollTo(0, 0)
@@ -26,50 +32,88 @@ function ScrollManager() {
   return null
 }
 
-function PageFallback() {
+function Fallback() {
   return (
-    <div className="grid min-h-[60vh] place-items-center text-muted">
+    <div className="grid min-h-[60dvh] place-items-center text-muted">
       <Spinner />
     </div>
   )
 }
 
-export default function App() {
-  const location = useLocation()
-
+function Page() {
+  const { pathname } = useLocation()
   return (
-    <div className="grain flex min-h-dvh flex-col">
-      <a
-        href="#main"
-        className="sr-only z-50 rounded-full bg-accent px-4 py-2 text-on-accent focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
-      >
+    <motion.div
+      key={pathname}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <Suspense fallback={<Fallback />}>
+        <Outlet />
+      </Suspense>
+    </motion.div>
+  )
+}
+
+function SiteLayout() {
+  return (
+    <>
+      <SiteHeader />
+      <main id="main" className="min-h-[70dvh]">
+        <Page />
+      </main>
+      <Footer />
+    </>
+  )
+}
+
+function RedirectToProfile() {
+  const { handle } = useParams()
+  return <Navigate to={`/u/${handle}`} replace />
+}
+
+export default function App() {
+  const { resolved } = useTheme()
+  return (
+    <div className="grain">
+      <a href="#main" className="sr-only rounded-full bg-ink px-4 py-2 text-bg focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-80">
         Skip to content
       </a>
       <ScrollManager />
-      <ContractBanner />
-      <Header />
-      <main id="main" className="flex-1">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <Suspense fallback={<PageFallback />}>
-              <Routes location={location}>
-                <Route path="/" element={<Home />} />
-                <Route path="/create" element={<Create />} />
-                <Route path="/id/:address" element={<Credential />} />
-                <Route path="/verify" element={<Lookup />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </motion.div>
-        </AnimatePresence>
-      </main>
-      <Footer />
+      <CommandMenu />
+      <Routes>
+        <Route element={<SiteLayout />}>
+          <Route index element={<Home />} />
+          <Route path="start" element={<Onboard />} />
+          <Route path="u/:handle" element={<Profile />} />
+          <Route path="g/:id" element={<GateJoin />} />
+          <Route path="developers" element={<Developers />} />
+          <Route path="create" element={<Navigate to="/start" replace />} />
+          <Route path="verify" element={<Navigate to="/developers#lookup" replace />} />
+          <Route path="id/:handle" element={<RedirectToProfile />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+        <Route path="app" element={<AppShell />}>
+          <Route element={<Page />}>
+            <Route index element={<Overview />} />
+            <Route path="gates" element={<Gates />} />
+            <Route path="gates/:id" element={<GateDetail />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+        </Route>
+      </Routes>
+      <Toaster
+        theme={resolved}
+        position="bottom-center"
+        offset={88}
+        toastOptions={{
+          classNames: {
+            toast: '!rounded-[20px] !border-line-strong !bg-bg-elev !text-ink !shadow-card',
+            description: '!text-ink-2',
+          },
+        }}
+      />
     </div>
   )
 }

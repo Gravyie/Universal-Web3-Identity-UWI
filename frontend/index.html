@@ -4,12 +4,12 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="UWI is a privacy-preserving, Sybil-resistant identity layer for Web3. Prove you're a unique human with zero-knowledge and carry a soulbound credential across dApps." />
-    <meta name="theme-color" content="#0b0c0e" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#f3f0e8" media="(prefers-color-scheme: light)" />
-    <meta property="og:title" content="UWI — Universal Web3 Identity" />
-    <meta property="og:description" content="One human. One identity. Zero oversharing." />
-    <title>UWI — Universal Web3 Identity</title>
+    <meta name="description" content="Prove you're a unique human once, privately, and use it across every Web3 app. Soulbound credentials, Sybil-proof gates and a public API." />
+    <meta name="theme-color" content="#0c0c0e" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f6f6f7" media="(prefers-color-scheme: light)" />
+    <meta property="og:title" content="UWI: Universal Web3 Identity" />
+    <meta property="og:description" content="Prove you're human once. Use it everywhere." />
+    <title>UWI: Universal Web3 Identity</title>
     <script>
       // Apply the saved theme before first paint so there is no flash.
       try {
@@ -17,10 +17,10 @@
         var mode = s.mode || 'system'
         var dark = mode === 'dark' || (mode === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
         document.documentElement.dataset.theme = dark ? 'dark' : 'light'
-        document.documentElement.dataset.accent = s.accent || 'verdigris'
+        document.documentElement.dataset.accent = s.accent || 'cobalt'
       } catch (e) {
         document.documentElement.dataset.theme = 'dark'
-        document.documentElement.dataset.accent = 'verdigris'
+        document.documentElement.dataset.accent = 'cobalt'
       }
     </script>
   </head>

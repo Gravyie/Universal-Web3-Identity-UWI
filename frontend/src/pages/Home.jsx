@@ -1,32 +1,20 @@
+import * as Accordion from '@radix-ui/react-accordion'
 import { motion } from 'motion/react'
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Coins,
-  EyeOff,
-  Fingerprint,
-  Gamepad2,
-  Landmark,
-  Lock,
-  ScanFace,
-  Users,
-  Vote,
-  Wallet,
-} from 'lucide-react'
+import { ArrowRight, ArrowsClockwise, Code, DownloadSimple, Fingerprint, GasPump, Plus, SealCheck } from '@phosphor-icons/react'
 import { Button } from '../components/ui/Button'
-import { Reveal } from '../components/ui/Reveal'
-import { easeOutExpo } from '../lib/motion'
-import { IdentityCard } from '../components/IdentityCard'
-import { Guilloche } from '../components/Guilloche'
-import { IntegrationSnippets } from '../components/IntegrationSnippets'
-import { useTotalSupply } from '../hooks/useIdentity'
+import { HoloCard } from '../components/holo/HoloCard'
+import { GateCard } from '../components/GateCard'
+import { CodeSnippets } from '../components/CodeSnippets'
+import { SybilDiagram, SystemPipeline } from '../components/Diagrams'
+import { useStats } from '../hooks/useCredential'
 import { formatNumber } from '../lib/format'
+import { easeOutExpo } from '../lib/motion'
 
-const SAMPLE = {
-  username: 'ada_lovelace',
-  address: '0x7a3F1c9E0b5D2A8e4C6f1B3d9E7a2C5b8D0e4F61',
-  tokenId: 42,
-  issuedAt: Date.UTC(2026, 9, 14),
+const reveal = {
+  initial: { opacity: 0, y: 20 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '-80px' },
+  transition: { duration: 0.7, ease: easeOutExpo },
 }
 
 export default function Home() {
@@ -37,9 +25,10 @@ export default function Home() {
       <Problem />
       <HowItWorks />
       <Privacy />
-      <UseCases />
+      <GatesSection />
       <Builders />
-      <FinalCta />
+      <Faq />
+      <Closing />
     </>
   )
 }
@@ -47,398 +36,244 @@ export default function Home() {
 /* ── Hero ─────────────────────────────────────────────────────────────── */
 
 function Hero() {
-  const line = {
-    hidden: { opacity: 0, y: 28, filter: 'blur(6px)' },
-    show: (i) => ({
-      opacity: 1,
-      y: 0,
-      filter: 'blur(0px)',
-      transition: { duration: 0.9, delay: 0.1 + i * 0.09, ease: easeOutExpo },
-    }),
-  }
-
+  const enter = (i) => ({
+    initial: { opacity: 0, y: 18 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.8, delay: 0.05 + i * 0.08, ease: easeOutExpo },
+  })
   return (
     <section className="relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 hairline-grid [mask-image:radial-gradient(70%_60%_at_60%_40%,black,transparent)] opacity-70" />
-      <div className="pointer-events-none absolute top-1/2 left-[68%] aspect-square w-[min(1100px,140vw)] -translate-x-1/2 -translate-y-1/2 text-accent max-lg:top-[72%] max-lg:left-1/2">
-        <Guilloche variant="seal" draw strokeWidth={0.16} opacity={0.2} />
-      </div>
-
-      <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-4 pt-12 pb-20 sm:px-6 sm:pt-20 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:pt-24 lg:pb-28">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-40 right-[-10%] size-[720px] rounded-full opacity-60 blur-3xl"
+        style={{ background: 'radial-gradient(circle, var(--accent-soft), transparent 65%)' }}
+      />
+      <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 pt-12 pb-20 sm:px-6 md:pt-16 lg:grid-cols-[1.08fr_1fr] lg:gap-12 lg:pt-20 lg:pb-24">
         <div>
-          <motion.div
-            variants={line}
-            initial="hidden"
-            animate="show"
-            custom={0}
-            className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface/60 py-1 pr-3 pl-1 text-xs text-ink-2 backdrop-blur"
+          <motion.h1
+            {...enter(0)}
+            className="text-[clamp(2.4rem,3.7vw,3.4rem)] leading-[1.06] font-semibold tracking-[-0.05em] text-ink"
           >
-            <span className="rounded-full bg-accent-soft px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-accent uppercase">
-              Testnet
-            </span>
-            Proof of personhood for Web3
-          </motion.div>
-
-          <h1 className="mt-6 text-[clamp(2.6rem,7vw,5.25rem)] leading-[0.98] font-semibold tracking-[-0.045em] text-balance text-ink">
-            <motion.span variants={line} initial="hidden" animate="show" custom={1} className="block">
-              One human.
-            </motion.span>
-            <motion.span variants={line} initial="hidden" animate="show" custom={2} className="block">
-              One identity.
-            </motion.span>
-            <motion.span
-              variants={line}
-              initial="hidden"
-              animate="show"
-              custom={3}
-              className="block font-display font-normal tracking-[-0.02em] text-accent italic"
-            >
-              Zero oversharing.
-            </motion.span>
-          </h1>
-
-          <motion.p
-            variants={line}
-            initial="hidden"
-            animate="show"
-            custom={4}
-            className="mt-6 max-w-[34rem] text-[17px] leading-relaxed text-ink-2"
-          >
-            UWI proves you're a real, unique person with a zero-knowledge passport check — then binds that proof
-            to your wallet as a soulbound credential. Airdrops, DAOs and communities get Sybil resistance. You keep
-            your documents.
+            <span className="lg:block lg:whitespace-nowrap">Prove you're human once. </span>
+            <span className="text-muted lg:block lg:whitespace-nowrap">Use it everywhere.</span>
+          </motion.h1>
+          <motion.p {...enter(1)} className="mt-6 max-w-[34rem] text-lg leading-relaxed text-ink-2">
+            A private, soulbound credential that tells any app you're one unique person, without showing who you are.
           </motion.p>
-
-          <motion.div
-            variants={line}
-            initial="hidden"
-            animate="show"
-            custom={5}
-            className="mt-9 flex flex-wrap items-center gap-3"
-          >
-            <Button to="/create" size="lg">
-              Create your identity
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+          <motion.div {...enter(2)} className="mt-9 flex flex-wrap items-center gap-3">
+            <Button to="/start" size="lg">
+              Get verified <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
             </Button>
-            <Button to="/verify" size="lg" variant="secondary">
-              Verify an address
+            <Button to="/developers" size="lg" variant="secondary">
+              Build with UWI
             </Button>
           </motion.div>
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 40, rotateX: 18, scale: 0.94 }}
-          animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
-          transition={{ duration: 1.3, delay: 0.35, ease: easeOutExpo }}
-          className="relative mx-auto w-full max-w-[520px] [perspective:1400px]"
+          initial={{ opacity: 0, y: 40, rotate: -4 }}
+          animate={{ opacity: 1, y: 0, rotate: 0 }}
+          transition={{ duration: 1.2, delay: 0.2, ease: easeOutExpo }}
+          className="relative mx-auto w-full max-w-[560px]"
         >
-          <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <IdentityCard {...SAMPLE} status="verified" />
-          </motion.div>
-          <div className="pointer-events-none absolute inset-x-[10%] -bottom-10 h-16 rounded-[50%] bg-black/30 blur-2xl dark:bg-black/60" />
-          <p className="mt-14 text-center font-mono text-[11px] tracking-[0.14em] text-muted uppercase">
-            Sample credential · move your cursor over it
-          </p>
+          <HoloCard
+            username="ada_lovelace"
+            address="0x7a3F1c9E0b5D2A8e4C6f1B3d9E7a2C5b8D0e4F61"
+            tokenId={42}
+            issuedAt={Date.UTC(2026, 9, 14)}
+            proof="self"
+            label="Example UWI credential for @ada_lovelace. Move the pointer over it, or tilt your phone."
+          />
         </motion.div>
       </div>
     </section>
   )
 }
 
-/* ── Stats ────────────────────────────────────────────────────────────── */
+/* ── Live network stats ───────────────────────────────────────────────── */
 
 function Stats() {
-  const { data: supply, isLoading } = useTotalSupply()
+  const { humans, gates, isLoading } = useStats()
   const items = [
-    {
-      k: 'Credentials issued',
-      v: isLoading ? null : supply !== undefined ? formatNumber(Number(supply)) : '—',
-      live: true,
-    },
-    { k: 'Documents stored on-chain', v: '0' },
-    { k: 'Times a credential can move', v: 'Never' },
-    { k: 'Network', v: 'Hedera' },
+    { k: 'Verified humans', v: humans !== undefined ? formatNumber(Number(humans)) : null },
+    { k: 'Gates created', v: gates !== undefined ? formatNumber(Number(gates)) : null },
+    { k: 'Documents stored', v: '0' },
+    { k: 'Gas paid by users', v: '0 HBAR' },
   ]
   return (
-    <section className="border-y border-line bg-bg-elev/60">
-      <div className="mx-auto grid max-w-6xl grid-cols-2 divide-line px-4 sm:px-6 lg:grid-cols-4 lg:divide-x">
+    <section className="border-y border-line bg-bg-elev">
+      <dl className="mx-auto grid max-w-7xl grid-cols-2 px-4 sm:px-6 md:grid-cols-4">
         {items.map((s, i) => (
-          <Reveal key={s.k} delay={i * 0.06} className="px-1 py-7 lg:px-7">
-            <div className="flex items-center gap-2 text-xs text-muted">
-              {s.live && (
-                <span className="relative flex size-1.5">
-                  <span className="absolute inset-0 animate-ping rounded-full bg-accent opacity-60" />
-                  <span className="relative size-1.5 rounded-full bg-accent" />
-                </span>
-              )}
-              {s.k}
-            </div>
-            <div className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-ink tabular-nums">
-              {s.v ?? <span className="skeleton inline-block h-8 w-14 rounded-md align-middle" />}
-            </div>
-          </Reveal>
+          <motion.div key={s.k} {...reveal} transition={{ ...reveal.transition, delay: i * 0.05 }} className="py-8 md:px-6 md:first:pl-0">
+            <dt className="text-sm text-muted">{s.k}</dt>
+            <dd className="mt-1.5 text-3xl font-semibold tracking-[-0.04em] text-ink tabular-nums">
+              {s.v ?? (isLoading ? <span className="skeleton inline-block h-8 w-16 rounded-lg align-middle" /> : '-')}
+            </dd>
+          </motion.div>
         ))}
-      </div>
+      </dl>
     </section>
   )
 }
 
 /* ── Problem ──────────────────────────────────────────────────────────── */
 
-function SectionHead({ eyebrow, title, children, id }) {
-  return (
-    <Reveal className="max-w-2xl" id={id}>
-      <div className="eyebrow">{eyebrow}</div>
-      <h2 className="mt-4 text-[clamp(2rem,4.4vw,3.25rem)] leading-[1.02] font-semibold tracking-[-0.04em] text-balance text-ink">
-        {title}
-      </h2>
-      {children && <p className="mt-5 text-[17px] leading-relaxed text-ink-2">{children}</p>}
-    </Reveal>
-  )
-}
-
-function SybilDiagram({ unified }) {
-  const wallets = Array.from({ length: 9 }, (_, i) => {
-    const a = (-70 + i * 17.5) * (Math.PI / 180)
-    return { x: 150 + Math.cos(a) * 110, y: 110 + Math.sin(a) * 92 }
-  })
-  return (
-    <svg viewBox="0 0 300 220" className="w-full" aria-hidden="true">
-      {wallets.map((w, i) => {
-        const muted = unified && i !== 4
-        return (
-          <g key={i}>
-            <motion.line
-              x1="40"
-              y1="110"
-              x2={w.x}
-              y2={w.y}
-              stroke="currentColor"
-              strokeWidth="1"
-              className={muted ? 'text-line-strong' : unified ? 'text-accent' : 'text-danger/70'}
-              strokeDasharray={muted ? '3 4' : undefined}
-              initial={{ pathLength: 0 }}
-              whileInView={{ pathLength: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.9, delay: 0.2 + i * 0.05, ease: easeOutExpo }}
-            />
-            <motion.rect
-              x={w.x - 9}
-              y={w.y - 7}
-              width="18"
-              height="14"
-              rx="3"
-              className={muted ? 'fill-surface-2 stroke-line-strong' : unified ? 'fill-accent-soft stroke-accent' : 'fill-danger/10 stroke-danger/70'}
-              strokeWidth="1"
-              initial={{ scale: 0, opacity: 0 }}
-              whileInView={{ scale: 1, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.5 + i * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
-              style={{ transformOrigin: `${w.x}px ${w.y}px` }}
-            />
-          </g>
-        )
-      })}
-      <circle cx="40" cy="110" r="16" className="fill-surface stroke-line-strong" strokeWidth="1" />
-      <circle cx="40" cy="104" r="4.5" className="fill-ink-2" />
-      <path d="M31 119a9 7 0 0 1 18 0" className="fill-ink-2" />
-    </svg>
-  )
-}
-
 function Problem() {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32">
-      <SectionHead eyebrow="The problem" title="Wallets are free. People aren't.">
-        Anyone can spin up a thousand addresses in a minute. That breaks every system that assumes one wallet
-        means one person — fair launches, token-weighted votes, faucets, quests.
-      </SectionHead>
-
-      <div className="mt-14 grid gap-4 md:grid-cols-2">
-        {[
-          {
-            title: 'Without UWI',
-            body: 'One farmer, nine wallets, nine airdrop claims. Votes and rewards go to whoever scripts hardest.',
-            unified: false,
-          },
-          {
-            title: 'With UWI',
-            body: 'One verified person, one credential. Extra wallets have no proof attached, so they get nothing.',
-            unified: true,
-          },
-        ].map((c, i) => (
-          <Reveal
-            key={c.title}
-            delay={i * 0.1}
-            className="rounded-3xl border border-line bg-bg-elev p-6 sm:p-8"
-          >
-            <div className="flex items-center gap-2">
-              <span className={`size-2 rounded-full ${c.unified ? 'bg-accent' : 'bg-danger'}`} />
-              <h3 className="font-medium text-ink">{c.title}</h3>
-            </div>
-            <p className="mt-2 max-w-sm text-[15px] leading-relaxed text-ink-2">{c.body}</p>
-            <div className="mt-6 px-2">
-              <SybilDiagram unified={c.unified} />
-            </div>
-          </Reveal>
-        ))}
-      </div>
+    <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 md:py-32">
+      <motion.h2 {...reveal} className="max-w-2xl text-[clamp(2rem,4vw,3rem)] leading-[1.05] font-semibold tracking-[-0.045em] text-balance text-ink">
+        Wallets are free. That's the problem.
+      </motion.h2>
+      <motion.p {...reveal} className="mt-4 max-w-xl text-lg text-ink-2">
+        Anything that assumes one wallet means one person can be farmed. Flip the switch to see the difference.
+      </motion.p>
+      <motion.div {...reveal} className="mt-12">
+        <SybilDiagram />
+      </motion.div>
     </section>
   )
 }
 
 /* ── How it works ─────────────────────────────────────────────────────── */
 
-const STEPS = [
-  { icon: Wallet, title: 'Connect a wallet', body: 'Any EVM wallet works — browser extension or mobile via WalletConnect.' },
-  { icon: Fingerprint, title: 'Pick a username', body: 'The only human-readable detail on your credential. Make it yours.' },
-  {
-    icon: ScanFace,
-    title: 'Prove it with Self',
-    body: "Scan the QR with the Self app. Your passport's NFC chip is read on your phone and turned into a zero-knowledge proof.",
-  },
-  {
-    icon: Lock,
-    title: 'Mint your soulbound ID',
-    body: 'A non-transferable token on Hedera binds the proof to your wallet. Any dApp can check it with one call.',
-  },
-]
-
 function HowItWorks() {
   return (
-    <section id="how" className="scroll-mt-20 border-t border-line bg-bg-elev/50">
-      <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32">
-        <SectionHead eyebrow="How it works" title="Four steps. About two minutes.">
-          No forms, no selfies uploaded to a vendor, no waiting for a reviewer.
-        </SectionHead>
-
-        <ol className="relative mt-16 grid gap-10 md:grid-cols-4 md:gap-6">
-          <motion.div
-            className="absolute top-5 right-[12%] left-[12%] hidden h-px origin-left bg-line-strong md:block"
-            initial={{ scaleX: 0 }}
-            whileInView={{ scaleX: 1 }}
-            viewport={{ once: true, margin: '-100px' }}
-            transition={{ duration: 1.4, ease: easeOutExpo }}
-          />
-          {STEPS.map((s, i) => (
-            <Reveal as="li" key={s.title} delay={0.15 + i * 0.12} className="relative flex gap-5 md:block">
-              <div className="relative z-10 grid size-10 shrink-0 place-items-center rounded-full border border-line-strong bg-bg text-accent">
-                <s.icon className="size-[18px]" />
-              </div>
-              <div className="md:mt-6">
-                <div className="font-mono text-xs text-muted">0{i + 1}</div>
-                <h3 className="mt-1 text-lg font-medium tracking-[-0.02em] text-ink">{s.title}</h3>
-                <p className="mt-2 text-[15px] leading-relaxed text-ink-2">{s.body}</p>
-              </div>
-            </Reveal>
-          ))}
-        </ol>
+    <section id="how" className="scroll-mt-20 border-t border-line bg-bg-elev">
+      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 md:py-32">
+        <motion.p {...reveal} className="label">
+          How it works
+        </motion.p>
+        <motion.h2 {...reveal} className="mt-4 max-w-2xl text-[clamp(2rem,4vw,3rem)] leading-[1.05] font-semibold tracking-[-0.045em] text-balance text-ink">
+          Less data at every hop.
+        </motion.h2>
+        <motion.p {...reveal} className="mt-4 max-w-xl text-lg text-ink-2">
+          Each step only passes on what the next one needs. By the time an app asks, the answer is a single yes or no.
+        </motion.p>
+        <div className="mt-14 md:mb-10">
+          <SystemPipeline />
+        </div>
       </div>
     </section>
   )
 }
 
-/* ── Privacy ledger ───────────────────────────────────────────────────── */
+/* ── Privacy ──────────────────────────────────────────────────────────── */
 
 function Privacy() {
-  const onChain = [
+  const chain = [
     ['Username', 'ada_lovelace'],
-    ['Verification hash', '0x9f2c…e41a'],
-    ['Issued at', 'block timestamp'],
-    ['Owner', 'your wallet address'],
+    ['Nullifier hash', '0x2f9c...e41a'],
+    ['Issued', 'block timestamp'],
+    ['Holder', 'your wallet'],
   ]
-  const offChain = ['Legal name', 'Date of birth', 'Passport number', 'Nationality', 'Photo', 'Document expiry']
-
+  const phone = ['Legal name', 'Date of birth', 'Passport number', 'Nationality', 'Photo', 'Expiry date']
   return (
-    <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32">
-      <SectionHead eyebrow="Privacy by construction" title="The chain learns that you're human. Nothing else.">
-        Self reads your document on your phone and only shares the answer to a yes-or-no question — “is this a
-        unique person over 18?” UWI stores a hash of that answer, never the document.
-      </SectionHead>
-
-      <div className="mt-14 grid overflow-hidden rounded-3xl border border-line-strong md:grid-cols-2">
-        <Reveal className="bg-bg-elev p-6 sm:p-9">
-          <div className="flex items-center gap-2 text-sm font-medium text-ink">
-            <Landmark className="size-4 text-accent" /> Written on-chain
-          </div>
-          <dl className="mt-6 divide-y divide-line">
-            {onChain.map(([k, v], i) => (
-              <motion.div
-                key={k}
-                initial={{ opacity: 0, x: -10 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 + i * 0.08, ease: easeOutExpo, duration: 0.6 }}
-                className="flex items-center justify-between gap-4 py-3.5"
-              >
-                <dt className="text-[15px] text-ink-2">{k}</dt>
-                <dd className="truncate font-mono text-[13px] text-ink">{v}</dd>
-              </motion.div>
-            ))}
-          </dl>
-        </Reveal>
-        <Reveal delay={0.1} className="relative overflow-hidden border-t border-line-strong bg-surface-2/60 p-6 sm:p-9 md:border-t-0 md:border-l">
-          <div className="flex items-center gap-2 text-sm font-medium text-ink">
-            <EyeOff className="size-4 text-accent" /> Never leaves your phone
-          </div>
-          <ul className="mt-6 flex flex-wrap gap-2">
-            {offChain.map((item, i) => (
-              <motion.li
-                key={item}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.25 + i * 0.06, type: 'spring', stiffness: 300, damping: 22 }}
-                className="rounded-full border border-line-strong bg-bg/60 px-3.5 py-1.5 text-sm text-ink-2 line-through decoration-muted/60"
-              >
-                {item}
-              </motion.li>
-            ))}
-          </ul>
-          <p className="mt-8 max-w-sm text-sm leading-relaxed text-muted">
-            Zero-knowledge proofs let Self show a statement is true without showing the data behind it.
+    <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 md:py-32">
+      <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <motion.div {...reveal}>
+          <h2 className="text-[clamp(2rem,4vw,3rem)] leading-[1.05] font-semibold tracking-[-0.045em] text-balance text-ink">
+            The chain learns you're human. Nothing else.
+          </h2>
+          <p className="mt-4 max-w-md text-lg text-ink-2">
+            The nullifier is derived from your document and UWI's scope, so it can't be traced back to the document or linked across other apps.
           </p>
-          <div className="pointer-events-none absolute -right-16 -bottom-20 size-64 text-accent">
-            <Guilloche variant="mark" strokeWidth={0.5} opacity={0.25} />
+        </motion.div>
+        <motion.div {...reveal} className="grid overflow-hidden rounded-[20px] border border-line-strong sm:grid-cols-2">
+          <div className="bg-surface p-6">
+            <h3 className="text-sm font-medium text-ink">On-chain</h3>
+            <dl className="mt-5 grid gap-4">
+              {chain.map(([k, v]) => (
+                <div key={k}>
+                  <dt className="text-xs text-muted">{k}</dt>
+                  <dd className="mt-0.5 font-mono text-[13px] text-ink">{v}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
-        </Reveal>
+          <div className="border-t border-line-strong bg-surface-2 p-6 sm:border-t-0 sm:border-l">
+            <h3 className="text-sm font-medium text-ink">Stays on your phone</h3>
+            <ul className="mt-5 flex flex-wrap gap-2">
+              {phone.map((p, i) => (
+                <motion.li
+                  key={p}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2 + i * 0.05, type: 'spring', stiffness: 300, damping: 22 }}
+                  className="rounded-full border border-line-strong bg-bg px-3 py-1 text-sm text-muted line-through"
+                >
+                  {p}
+                </motion.li>
+              ))}
+            </ul>
+          </div>
+        </motion.div>
       </div>
     </section>
   )
 }
 
-/* ── Use cases ────────────────────────────────────────────────────────── */
+/* ── Gates (the product for builders) ─────────────────────────────────── */
 
-const CASES = [
-  { icon: Coins, title: 'Fair airdrops', body: 'One claim per person, not per wallet. Farmers stop draining your distribution.', span: 'md:col-span-2' },
-  { icon: Vote, title: 'DAO governance', body: 'One-person-one-vote and quadratic voting finally hold up.' },
-  { icon: Users, title: 'Communities', body: 'Token-gate a Discord or forum to verified humans without collecting emails.' },
-  { icon: Gamepad2, title: 'Gaming & quests', body: 'Leaderboards and reward pools free of bot armies and alt accounts.', span: 'md:col-span-2' },
-]
+const EXAMPLE_GATE = {
+  id: 'example',
+  name: 'Season 2 airdrop',
+  description: 'One claim per human. Snapshot when the gate closes.',
+  memberCount: 1284,
+  capacity: 5000,
+  closesAt: Date.now() + 6 * 86400000,
+  strict: true,
+  closed: false,
+}
 
-function UseCases() {
+function GatesSection() {
+  const cells = [
+    { icon: Fingerprint, title: 'One entry per human', body: 'Entries are keyed to the credential, not the wallet. Switching wallets gets nobody a second spot.' },
+    { icon: GasPump, title: 'Gasless to join', body: 'People sign a message. The relayer pays. Nobody needs HBAR to sign up.' },
+    { icon: DownloadSimple, title: 'Export anywhere', body: 'CSV, JSON or straight from the contract. Your list, readable by any script.' },
+  ]
   return (
-    <section className="border-t border-line bg-bg-elev/50">
-      <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32">
-        <SectionHead eyebrow="Use cases" title="Verify once. Show up everywhere.">
-          Instead of every dApp running its own checks, they read the same credential. You never repeat KYC.
-        </SectionHead>
-        <div className="mt-14 grid gap-4 md:grid-cols-3">
-          {CASES.map((c, i) => (
-            <Reveal
+    <section id="gates" className="scroll-mt-20 border-t border-line bg-bg-elev">
+      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 md:py-32">
+        <motion.p {...reveal} className="label">
+          Gates
+        </motion.p>
+        <motion.h2 {...reveal} className="mt-4 max-w-2xl text-[clamp(2rem,4vw,3rem)] leading-[1.05] font-semibold tracking-[-0.045em] text-balance text-ink">
+          Sybil-proof lists in a minute.
+        </motion.h2>
+        <motion.p {...reveal} className="mt-4 max-w-xl text-lg text-ink-2">
+          Allowlists, waitlists and sign-ups that only verified humans can join. Share a link, watch it fill, export it.
+        </motion.p>
+
+        <div className="mt-14 grid gap-4 md:grid-cols-6">
+          <motion.div
+            {...reveal}
+            className="relative overflow-hidden rounded-[20px] border border-line p-6 md:col-span-4 md:row-span-2 md:p-10"
+            style={{ background: 'radial-gradient(120% 100% at 100% 0%, var(--accent-soft), transparent 60%), var(--surface)' }}
+          >
+            <p className="text-sm text-muted">Example gate</p>
+            <div className="mt-4 max-w-md">
+              <GateCard gate={EXAMPLE_GATE} memberSeeds={['a1', 'b2', 'c3', 'd4', 'e5', 'f6']} />
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button to="/app/gates" variant="ink">
+                <Plus className="size-4" /> Create a gate
+              </Button>
+            </div>
+          </motion.div>
+          {cells.map((c, i) => (
+            <motion.div
               key={c.title}
-              delay={i * 0.07}
-              className={`group relative overflow-hidden rounded-3xl border border-line bg-bg p-7 transition-colors hover:border-line-strong ${c.span ?? ''}`}
+              {...reveal}
+              transition={{ ...reveal.transition, delay: 0.08 * i }}
+              className={`rounded-[20px] border border-line p-6 md:col-span-2 ${i === 2 ? 'bg-ink text-bg md:col-span-6 md:flex md:items-center md:gap-8' : 'bg-surface'}`}
             >
-              <div className="grid size-11 place-items-center rounded-2xl bg-accent-soft text-accent transition-transform duration-500 ease-out group-hover:-rotate-6 group-hover:scale-110">
-                <c.icon className="size-5" />
+              <c.icon className={`size-5 shrink-0 ${i === 2 ? 'text-bg' : 'text-accent'}`} weight="duotone" />
+              <div className={i === 2 ? 'mt-4 md:mt-0' : 'mt-4'}>
+                <h3 className={`font-medium ${i === 2 ? 'text-bg' : 'text-ink'}`}>{c.title}</h3>
+                <p className={`mt-1.5 text-sm leading-relaxed ${i === 2 ? 'text-bg/70' : 'text-ink-2'}`}>{c.body}</p>
               </div>
-              <h3 className="mt-10 text-xl font-medium tracking-[-0.025em] text-ink">{c.title}</h3>
-              <p className="mt-2 max-w-md text-[15px] leading-relaxed text-ink-2">{c.body}</p>
-            </Reveal>
+            </motion.div>
           ))}
         </div>
       </div>
@@ -449,54 +284,90 @@ function UseCases() {
 /* ── Builders ─────────────────────────────────────────────────────────── */
 
 function Builders() {
+  const points = [
+    { icon: Code, text: 'A view call from Solidity, or one GET from any backend.' },
+    { icon: SealCheck, text: 'Strict mode only accepts real Self proofs, never demo ones.' },
+    { icon: ArrowsClockwise, text: 'Lost wallets recover to new ones with the same identity.' },
+  ]
   return (
-    <section id="builders" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-24 sm:px-6 sm:py-32">
-      <div className="grid items-start gap-12 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="lg:sticky lg:top-28">
-          <SectionHead eyebrow="For builders" title="Sybil resistance in one line of code.">
-            Call <code className="rounded-md bg-surface-2 px-1.5 py-0.5 font-mono text-[0.85em] text-ink">isVerifiedHuman(address)</code> from
-            a contract or a frontend. No API keys, no vendor, no personal data to store or secure.
-          </SectionHead>
-          <Reveal delay={0.1} className="mt-8 flex flex-wrap gap-3">
-            <Button to="/verify" variant="secondary">
-              Try a lookup <ArrowRight className="size-4" />
-            </Button>
-          </Reveal>
-        </div>
-        <Reveal delay={0.1} className="min-w-0">
-          <IntegrationSnippets />
-        </Reveal>
+    <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 md:py-32">
+      <div className="grid items-start gap-12 lg:grid-cols-[0.8fr_1.2fr]">
+        <motion.div {...reveal} className="lg:sticky lg:top-28">
+          <h2 className="text-[clamp(2rem,4vw,3rem)] leading-[1.05] font-semibold tracking-[-0.045em] text-balance text-ink">
+            One question, three ways to ask it.
+          </h2>
+          <ul className="mt-8 grid gap-4">
+            {points.map(({ icon: Icon, text }) => (
+              <li key={text} className="flex gap-3 text-ink-2">
+                <Icon className="mt-0.5 size-5 shrink-0 text-accent" />
+                {text}
+              </li>
+            ))}
+          </ul>
+          <Button to="/developers" variant="secondary" className="mt-8">
+            Read the docs <ArrowRight className="size-4" />
+          </Button>
+        </motion.div>
+        <motion.div {...reveal} className="min-w-0">
+          <CodeSnippets only={['rest', 'solidity', 'viem']} />
+        </motion.div>
       </div>
     </section>
   )
 }
 
-/* ── Final CTA ────────────────────────────────────────────────────────── */
+/* ── FAQ ──────────────────────────────────────────────────────────────── */
 
-function FinalCta() {
+const FAQ = [
+  ['Does UWI see my passport?', 'No. Self reads the chip on your phone and produces a zero-knowledge proof. UWI checks that proof and only learns that you are over 18 and haven\'t registered before.'],
+  ['What if I lose my wallet?', 'Verify again with Self from a new wallet. Your passport produces the same nullifier, so UWI moves your existing credential, username and gate memberships to the new wallet.'],
+  ['Can I delete my credential?', 'Yes. Revoke it from Settings. The token is burned and your username and nullifier are released, so you can verify again later if you want.'],
+  ['Do I need crypto to use it?', 'You need a wallet, but not funds. Every action is a signed message, and the UWI relayer pays the network fees.'],
+  ['What is a demo credential?', 'On testnet you can try the full product without a passport. Demo credentials are marked on-chain and rejected by strict checks and strict gates.'],
+]
+
+function Faq() {
   return (
-    <section className="mx-auto max-w-6xl px-4 sm:px-6">
-      <Reveal className="relative overflow-hidden rounded-[2rem] border border-line-strong bg-bg-elev px-6 py-16 text-center sm:px-12 sm:py-24">
-        <div className="pointer-events-none absolute top-1/2 left-1/2 aspect-square w-[900px] -translate-x-1/2 -translate-y-1/2 text-accent">
-          <Guilloche variant="seal" strokeWidth={0.2} opacity={0.22} />
+    <section className="border-t border-line bg-bg-elev">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-24 sm:px-6 md:py-32 lg:grid-cols-[0.8fr_1.2fr]">
+        <motion.h2 {...reveal} className="text-[clamp(2rem,4vw,3rem)] leading-[1.05] font-semibold tracking-[-0.045em] text-ink">
+          Questions
+        </motion.h2>
+        <Accordion.Root type="single" collapsible className="divide-y divide-line border-y border-line">
+          {FAQ.map(([q, a]) => (
+            <Accordion.Item key={q} value={q}>
+              <Accordion.Header>
+                <Accordion.Trigger className="group flex w-full items-center justify-between gap-6 py-5 text-left text-[17px] font-medium text-ink">
+                  {q}
+                  <Plus className="size-4 shrink-0 text-muted transition-transform duration-300 group-data-[state=open]:rotate-45" />
+                </Accordion.Trigger>
+              </Accordion.Header>
+              <Accordion.Content className="overflow-hidden data-[state=closed]:animate-[accordion-up_200ms_ease-out] data-[state=open]:animate-[accordion-down_250ms_cubic-bezier(0.16,1,0.3,1)]">
+                <p className="max-w-xl pb-5 text-ink-2">{a}</p>
+              </Accordion.Content>
+            </Accordion.Item>
+          ))}
+        </Accordion.Root>
+      </div>
+    </section>
+  )
+}
+
+/* ── Closing ──────────────────────────────────────────────────────────── */
+
+function Closing() {
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 md:py-32">
+      <motion.div {...reveal} className="mx-auto max-w-3xl text-center">
+        <h2 className="text-[clamp(2.2rem,5vw,3.75rem)] leading-[1.02] font-semibold tracking-[-0.05em] text-balance text-ink">
+          Two minutes to verify. Then you're counted everywhere.
+        </h2>
+        <div className="mt-9 flex justify-center">
+          <Button to="/start" size="lg">
+            Get verified <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+          </Button>
         </div>
-        <div className="relative">
-          <h2 className="mx-auto max-w-2xl text-[clamp(2rem,5vw,3.75rem)] leading-[1] font-semibold tracking-[-0.045em] text-balance text-ink">
-            Be counted <span className="font-display font-normal text-accent italic">once</span>.
-          </h2>
-          <p className="mx-auto mt-5 max-w-md text-[17px] text-ink-2">
-            Get your credential in a couple of minutes. It's free on testnet — you only need a little test HBAR for gas.
-          </p>
-          <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <Button to="/create" size="lg">
-              Create your identity <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-            </Button>
-            <Button href="https://self.xyz" size="lg" variant="ghost">
-              About Self <ArrowUpRight className="size-4" />
-            </Button>
-          </div>
-        </div>
-      </Reveal>
+      </motion.div>
     </section>
   )
 }
