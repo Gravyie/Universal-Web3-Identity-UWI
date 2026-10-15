@@ -10,6 +10,7 @@ export function createWheelIntent() {
   let lastT = -1e9
   let locked = false
   let lockDir = 0
+  let lastStep = -1e9
   let spent = false // the current gesture is used up; only a new one counts
   const recent = []
   const avg = (a) => a.reduce((x, y) => x + y, 0) / a.length
@@ -18,9 +19,9 @@ export function createWheelIntent() {
     if (gap > 160) return true
     // a new swipe starts by speeding up; momentum and a steady carry-on do not
     if (spent) return recent.length >= 7 && mag >= 8 && avg([...recent.slice(-2), mag]) > avg(recent.slice(-7, -3)) * 1.35
-    if (recent.length < 8 || mag < 6) return false
+    if (recent.length < 8 || mag < 10) return false
     // inertia decays; intent holds steady or grows
-    return avg([...recent.slice(-3), mag]) >= avg(recent.slice(-7, -3))
+    return avg([...recent.slice(-3), mag]) >= avg(recent.slice(-7, -3)) * 0.995
   }
 
   return {
@@ -38,6 +39,8 @@ export function createWheelIntent() {
       recent.push(mag)
       if (recent.length > 8) recent.shift()
       const dir = Math.sign(dy)
+      // however hard the flick, the next chapter in the same direction waits for this move to land
+      if (locked && dir === lockDir && now - lastStep < 750) return { step: 0, lean: 0 }
       if (locked) {
         // reversing is always honoured; otherwise wait for the move to land
         if (!(intent && dir && (dir !== lockDir || settled))) return { step: 0, lean: 0 }
@@ -49,6 +52,7 @@ export function createWheelIntent() {
         const s = Math.sign(acc)
         locked = true
         lockDir = s
+        lastStep = now
         acc = 0
         return { step: s, lean: 0 }
       }

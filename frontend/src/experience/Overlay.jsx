@@ -257,8 +257,13 @@ export function Overlay({ chapters, revealed, faded }) {
         </Link>
       </header>
 
-      <div className={`pointer-events-none fixed inset-0 z-20 ${faded ? '[&_*]:!pointer-events-none' : ''}`}
-        style={fadeStyle}>
+      {/* a soft floor of shade so the story's text always reads over bright scenes */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-[15] h-[48vh] bg-gradient-to-t from-black/55 via-black/20 to-transparent"
+        style={fadeStyle}
+      />
+      <div className={`pointer-events-none fixed inset-0 z-20 ${faded ? '[&_*]:!pointer-events-none' : ''}`} style={fadeStyle}>
         <AnimatePresence mode="wait">
           {revealed && (
             <motion.section

@@ -9,8 +9,8 @@ import { NOVA, P, easeInOut, seg } from '../chapters'
 const SHOTS = [
   { p: P.hero, pos: [0, 0.2, 17], look: [0, 0.2, 0], fov: 34 },
   { p: P.problem, pos: [-4.2, 1.2, 8.2], look: [0.6, 0.2, 0], fov: 46 },
-  { p: P.void, pos: [0, 1.0, 10.5], look: [0, 0, 0], fov: 40 },
-  { p: P.collapse, pos: [4.6, 5.4, 8.6], look: [0, -0.3, 0], fov: 38 },
+  { p: P.void, pos: [-1.2, 0.85, 9.8], look: [0.3, -0.05, 0], fov: 42 },
+  { p: P.collapse, pos: [3.6, 1.4, 11.5], look: [-0.6, 0, 0], fov: 32 },
   { p: NOVA, pos: [0, 0.3, 7.2], look: [0, 0, 0], fov: 40 },
   { p: P.dawn, pos: [-1.0, -0.2, 6.9], look: [-1.55, -0.5, 0], fov: 40 },
   { p: P.everywhere, pos: [0, 0.75, 10.8], look: [0, -0.35, -1], fov: 44 },
@@ -56,6 +56,15 @@ export function CameraRig() {
       const dist = cam.position.distanceTo(look)
       const pull = 1 + (need - 1) * THREE.MathUtils.clamp(6 / dist, 0.35, 1)
       cam.position.sub(look).multiplyScalar(pull).add(look)
+    }
+
+    // in the vortex the camera drifts with the flow, for parallax through the orbits
+    const inVortex = 1 - Math.min(1, Math.abs(p - P.void) / ((P.collapse - P.void) * 0.75))
+    if (inVortex > 0 && !xp.reduced) {
+      const yaw = Math.sin(t * 0.11) * 0.16 * inVortex
+      const c = Math.cos(yaw)
+      const s = Math.sin(yaw)
+      cam.position.set(cam.position.x * c + cam.position.z * s, cam.position.y, -cam.position.x * s + cam.position.z * c)
     }
 
     if (!xp.reduced) {

@@ -121,7 +121,7 @@ export function Supernova() {
     mesh.current.quaternion.copy(state.camera.quaternion)
     material.uniforms.uTau.value = tau
     material.uniforms.uTime.value = state.clock.elapsedTime
-    material.uniforms.uCard.value = seg(t0, 1.4, 3)
+    material.uniforms.uCard.value = seg(t0, 1.7, 3.4)
   })
 
   return (
