@@ -2,145 +2,129 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { xp } from '../store'
-import { NOVA, seg, smooth } from '../chapters'
+import { NOVA, P, seg } from '../chapters'
 
-const EJECTA = 1400
-const PALETTE = ['#ff5fb0', '#7f6bff', '#4fe0ff', '#ffc061', '#ffffff'].map((c) => new THREE.Color(c))
+const SIZE = 22 // world units covered by the billboard
 
-const SHELL = /* glsl */ `
-  uniform float uTime, uFade, uSeed; uniform vec3 uA, uB;
-  varying vec3 vN; varying vec3 vView;
-  float hash(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,45.164))) * 43758.5453); }
-  float noise(vec3 p){ vec3 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
-    return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
-               mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z); }
-  float fbm(vec3 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.1; a*=0.5; } return v; }
-  void main(){
-    float rim = pow(1.0 - abs(dot(normalize(vN), normalize(vView))), 1.6);
-    float n = fbm(vN * 2.6 + uSeed + uTime * 0.15);
-    float filaments = smoothstep(0.42, 0.78, n);
-    vec3 col = mix(uB, uA, n) * (0.35 + filaments * 1.6) + vec3(1.0, 0.9, 0.95) * pow(filaments, 4.0) * 0.6;
-    gl_FragColor = vec4(col * rim * uFade * 1.8, 1.0);
-  }`
-
-function shellMaterial(a, b, seed) {
-  return new THREE.ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    side: THREE.DoubleSide,
-    uniforms: { uTime: { value: 0 }, uFade: { value: 0 }, uSeed: { value: seed }, uA: { value: new THREE.Color(a) }, uB: { value: new THREE.Color(b) } },
-    vertexShader: `varying vec3 vN; varying vec3 vView;
-      void main(){ vN = normalize(normalMatrix * normal); vec4 mv = modelViewMatrix * vec4(position,1.0); vView = -mv.xyz; gl_Position = projectionMatrix * mv; }`,
-    fragmentShader: SHELL,
-  })
-}
-
-/**
- * The rebound. A white-hot core flashes, then two shells of glowing gas tear
- * outward with filamentary structure, two shock rings sweep past at
- * different tilts, and coloured ejecta decelerate into the nebula, which is
- * literally the remnant of this blast.
+/*
+ * A core-collapse supernova, in the order it really happens, drawn in one
+ * pass on a camera-facing quad. tau runs 0..1 across the event.
+ *
+ *  1. Shock breakout: the shock reaches the surface and a brief blue-white
+ *     flash escapes from a point.
+ *  2. Fireball: the photosphere swells and cools along the blackbody curve,
+ *     blue-white to gold to deep orange, limb-darkened like any star.
+ *  3. Ejecta: a shell expanding at a few percent of c (r ~ t^0.75, slowing as
+ *     it sweeps up gas). It is limb-brightened because sight lines graze it,
+ *     and Rayleigh-Taylor instabilities break it into filaments that glow in
+ *     the remnant's emission lines: hydrogen-alpha red and oxygen-III teal.
+ *  4. Pulsar: the neutron star left behind, with a faint synchrotron nebula.
+ *     The credential is born where it sits.
  */
+const fragment = /* glsl */ `
+  uniform float uTau, uTime, uCard;
+  varying vec2 vPos;
+
+  float hash(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 45.164))) * 43758.5453); }
+  float noise(vec3 p) {
+    vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(mix(hash(i), hash(i + vec3(1, 0, 0)), f.x), mix(hash(i + vec3(0, 1, 0)), hash(i + vec3(1, 1, 0)), f.x), f.y),
+               mix(mix(hash(i + vec3(0, 0, 1)), hash(i + vec3(1, 0, 1)), f.x), mix(hash(i + vec3(0, 1, 1)), hash(i + vec3(1, 1, 1)), f.x), f.y), f.z);
+  }
+  float fbm(vec3 p) { float v = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { v += a * noise(p); p = p * 2.03 + 7.1; a *= 0.5; } return v; }
+
+  vec3 blackbody(float k) {
+    float t = clamp(k, 1000.0, 40000.0) / 100.0;
+    float r = t <= 66.0 ? 1.0 : 1.2929 * pow(t - 60.0, -0.1332);
+    float g = t <= 66.0 ? 0.3901 * log(t) - 0.6318 : 1.1299 * pow(t - 60.0, -0.0755);
+    float b = t >= 66.0 ? 1.0 : (t <= 19.0 ? 0.0 : 0.5432 * log(t - 10.0) - 1.1963);
+    return clamp(vec3(r, g, b), 0.0, 1.0);
+  }
+
+  void main() {
+    float tau = uTau;
+    float rho = length(vPos);
+    vec3 col = vec3(0.0);
+
+    // 1. shock breakout
+    float flash = exp(-tau * 45.0) * smoothstep(0.0, 0.006, tau);
+    col += blackbody(30000.0) * flash * (exp(-rho * rho / 0.05) * 14.0 + exp(-rho / 0.9) * 1.6);
+
+    // 2. fireball photosphere
+    float Rf = 0.08 + 0.7 * pow(tau, 0.55);
+    float x = rho / Rf;
+    float mu = sqrt(max(1.0 - x * x, 0.0));
+    float limb = 0.35 + 0.65 * mu;
+    float gran = 0.85 + 0.3 * fbm(vec3(vPos / Rf * 3.0, uTime * 0.4));
+    float L = smoothstep(0.0, 0.02, tau) * (1.0 - smoothstep(0.05, 0.28, tau));
+    float temp = mix(26000.0, 3200.0, smoothstep(0.0, 0.45, tau));
+    col += blackbody(temp) * limb * gran * smoothstep(1.02, 0.9, x) * L * 1.6;
+
+    // 3. ejecta shell with Rayleigh-Taylor filaments
+    float Rs = 0.25 + 4.2 * pow(tau, 0.75);
+    vec3 n = vec3(vPos, sqrt(max(Rs * Rs - rho * rho, 0.0))) / Rs;
+    float rt = fbm(n * 3.2 + 1.7);
+    float Rout = Rs * (1.0 + 0.16 * (rt - 0.5));
+    float Rin = Rout * 0.86;
+    float through = sqrt(max(Rout * Rout - rho * rho, 0.0)) - sqrt(max(Rin * Rin - rho * rho, 0.0));
+    float column = through / (Rout - Rin) / 4.0; // ~1 at the limb
+    // ridged noise: thin filaments, not clouds
+    float fil = fbm(n * 5.0 + vec3(0.0, 0.0, tau * 2.0));
+    float ridge = pow(1.0 - abs(fil * 2.0 - 1.0), 7.0);
+    float fine = pow(1.0 - abs(fbm(n * 13.0 + 3.0) * 2.0 - 1.0), 9.0);
+    float lines = fbm(n * 2.2 + 11.0);
+    vec3 halpha = vec3(1.0, 0.22, 0.42);
+    vec3 oiii = vec3(0.2, 0.85, 0.95);
+    vec3 emission = mix(halpha, oiii, smoothstep(0.35, 0.65, lines));
+    vec3 shellCol = mix(blackbody(mix(14000.0, 6000.0, tau)) * 1.2, emission, smoothstep(0.08, 0.4, tau));
+    float shellOn = smoothstep(0.015, 0.08, tau) * (1.0 - smoothstep(0.3, 0.8, tau)) * (1.0 - uCard * 0.6);
+    float edgeSoft = smoothstep(Rout * 1.01, Rout * 0.97, rho);
+    col += shellCol * pow(column, 1.4) * (0.06 + ridge * 1.5 + fine * 0.8) * edgeSoft * shellOn * 1.5;
+
+    // 4. pulsar and its wind nebula
+    float pulsarOn = smoothstep(0.12, 0.3, tau) * (1.0 - uCard * 0.85);
+    float beat = 0.6 + 0.4 * pow(0.5 + 0.5 * sin(uTime * 9.0), 6.0);
+    col += vec3(0.75, 0.85, 1.0) * exp(-rho * rho / 0.004) * 4.0 * beat * pulsarOn;
+    float wisps = fbm(vec3(vPos * 2.4, uTime * 0.15));
+    col += vec3(0.45, 0.5, 1.0) * exp(-rho / 0.55) * (0.15 + wisps * 0.35) * pulsarOn * (1.0 - smoothstep(0.6, 1.0, tau));
+
+    float e = max(abs(vPos.x), abs(vPos.y)) / ${(SIZE / 2).toFixed(1)};
+    col *= 1.0 - smoothstep(0.75, 1.0, e);
+    gl_FragColor = vec4(col, 1.0);
+  }
+`
+
 export function Supernova() {
-  const core = useRef()
-  const shells = useRef([])
-  const rings = useRef([])
-  const points = useRef()
-  const shellMats = useMemo(() => [shellMaterial('#ff6fbf', '#6a4bff', 1.7), shellMaterial('#4fe0ff', '#ff8a5c', 6.3)], [])
-  const ringMat = useMemo(
+  const mesh = useRef()
+  const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
+        uniforms: { uTau: { value: 0 }, uTime: { value: 0 }, uCard: { value: 0 } },
+        vertexShader: `varying vec2 vPos; void main(){ vPos = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        fragmentShader: fragment,
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
-        side: THREE.DoubleSide,
-        uniforms: { uFade: { value: 0 } },
-        vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-        fragmentShader: `uniform float uFade; varying vec2 vUv;
-          void main(){ float d = length(vUv - 0.5) * 2.0;
-            vec3 c = vec3(0.6,0.75,1.0) * exp(-pow((d - 0.94) * 30.0, 2.0)) * 2.4
-                   + vec3(1.0,0.45,0.75) * exp(-pow((d - 0.98) * 34.0, 2.0)) * 1.6
-                   + vec3(1.0,0.85,0.6) * exp(-pow((d - 0.9) * 24.0, 2.0)) * 0.8;
-            gl_FragColor = vec4(c * uFade, 1.0); }`,
+        toneMapped: false,
       }),
     [],
   )
-  const { positions, colors, dirs } = useMemo(() => {
-    const dirs = new Float32Array(EJECTA * 3)
-    const colors = new Float32Array(EJECTA * 3)
-    for (let i = 0; i < EJECTA; i++) {
-      const v = new THREE.Vector3().randomDirection().multiplyScalar(0.4 + Math.pow(Math.random(), 0.5))
-      dirs.set([v.x, v.y * 0.7, v.z], i * 3)
-      const c = PALETTE[i % PALETTE.length].clone().multiplyScalar(1.6)
-      colors.set([c.r, c.g, c.b], i * 3)
-    }
-    return { positions: new Float32Array(EJECTA * 3), colors, dirs }
-  }, [])
 
   useFrame((state) => {
     const p = xp.progress
-    const t = state.clock.elapsedTime
-    const boom = seg(p, NOVA - 0.004, NOVA + 0.06)
-    const on = boom > 0 && boom < 1
-    core.current.visible = points.current.visible = on
-    shells.current.forEach((s) => s && (s.visible = on))
-    rings.current.forEach((r) => r && (r.visible = on))
+    const tau = seg(p, NOVA - 0.004, NOVA + 0.085)
+    const on = tau > 0 && tau < 1
+    mesh.current.visible = on
     if (!on) return
-
-    // core: an instant flash that decays fast
-    const flash = Math.exp(-boom * 9) * smooth(seg(boom, 0, 0.04))
-    core.current.scale.setScalar(0.3 + boom * 3)
-    core.current.material.opacity = flash
-
-    // shells expand like a blast wave (r ~ t^0.4, Sedov-Taylor)
-    shellMats.forEach((m, i) => {
-      const s = shells.current[i]
-      if (!s) return
-      s.scale.setScalar(0.2 + Math.pow(boom, 0.4) * (i ? 9 : 12))
-      s.rotation.set(t * 0.05, t * 0.07 * (i ? -1 : 1), 0)
-      m.uniforms.uTime.value = t
-      m.uniforms.uFade.value = smooth(seg(boom, 0.01, 0.12)) * (1 - smooth(seg(boom, 0.45, 1)))
-    })
-    rings.current.forEach((r, i) => {
-      if (!r) return
-      r.scale.setScalar(0.1 + Math.pow(boom, 0.5) * (i ? 20 : 30))
-    })
-    ringMat.uniforms.uFade.value = 1 - smooth(seg(boom, 0.15, 0.8))
-
-    // ejecta: launched fast, slowed by the surrounding medium
-    const travel = 1 - Math.pow(1 - boom, 3)
-    for (let i = 0; i < EJECTA * 3; i++) positions[i] = dirs[i] * travel * 16
-    points.current.geometry.attributes.position.needsUpdate = true
-    points.current.material.opacity = 1 - smooth(seg(boom, 0.35, 1))
+    mesh.current.quaternion.copy(state.camera.quaternion)
+    material.uniforms.uTau.value = tau
+    material.uniforms.uTime.value = state.clock.elapsedTime
+    material.uniforms.uCard.value = seg(p, NOVA + 0.01, P.dawn - 0.04)
   })
 
   return (
-    <group>
-      <mesh ref={core} visible={false}>
-        <sphereGeometry args={[1, 32, 32]} />
-        <meshBasicMaterial color={[8, 7.5, 9]} toneMapped={false} transparent depthWrite={false} />
-      </mesh>
-      {shellMats.map((m, i) => (
-        <mesh key={i} ref={(el) => (shells.current[i] = el)} material={m} visible={false}>
-          <icosahedronGeometry args={[1, 24]} />
-        </mesh>
-      ))}
-      {[
-        [Math.PI / 2 - 0.25, 0, 0],
-        [Math.PI / 2 + 0.5, 0.6, 0],
-      ].map((rot, i) => (
-        <mesh key={i} ref={(el) => (rings.current[i] = el)} rotation={rot} material={ringMat} visible={false}>
-          <planeGeometry args={[1, 1]} />
-        </mesh>
-      ))}
-      <points ref={points} visible={false} frustumCulled={false}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" count={EJECTA} array={positions} itemSize={3} />
-          <bufferAttribute attach="attributes-color" count={EJECTA} array={colors} itemSize={3} />
-        </bufferGeometry>
-        <pointsMaterial size={0.06} vertexColors toneMapped={false} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
-      </points>
-    </group>
+    <mesh ref={mesh} material={material} visible={false} frustumCulled={false}>
+      <planeGeometry args={[SIZE, SIZE]} />
+    </mesh>
   )
 }

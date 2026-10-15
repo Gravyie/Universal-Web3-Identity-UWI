@@ -200,22 +200,55 @@ function swell(seconds, from, to, peak) {
   src.start()
 }
 
+// The sound toggle reads this state, so the button can never disagree with what you hear.
+const listeners = new Set()
+const emit = () => listeners.forEach((fn) => fn())
+let ducked = false
+let suspendTimer = 0
+const level = () => (ducked ? 0.3 : 0.9)
+
+// A hidden tab goes silent and the audio clock stops; coming back resumes only if sound was on.
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx) return
+    if (document.hidden) ctx.suspend()
+    else if (on) ctx.resume()
+  })
+}
+
 export const score = {
   get on() {
     return on
   },
+  subscribe(fn) {
+    listeners.add(fn)
+    return () => listeners.delete(fn)
+  },
   async start() {
     if (!ctx) build()
+    clearTimeout(suspendTimer)
     await ctx.resume()
     on = true
     master.gain.cancelScheduledValues(ctx.currentTime)
-    master.gain.setTargetAtTime(0.9, ctx.currentTime, 0.8)
+    master.gain.setTargetAtTime(level(), ctx.currentTime, 0.8)
     this.setScene(scene, true)
+    emit()
   },
   stop() {
-    if (!ctx) return
+    if (!on) return
     on = false
+    emit()
+    if (!ctx) return
+    master.gain.cancelScheduledValues(ctx.currentTime)
     master.gain.setTargetAtTime(0, ctx.currentTime, 0.25)
+    // after the fade, stop the audio clock entirely so nothing keeps running
+    clearTimeout(suspendTimer)
+    suspendTimer = setTimeout(() => !on && ctx.suspend(), 1200)
+  },
+  /** Quieter while the page is being read under the story. */
+  duck(value) {
+    ducked = value
+    if (on) master.gain.setTargetAtTime(level(), ctx.currentTime, 0.6)
   },
   /** Crossfade to a section's soundscape. */
   setScene(id, force) {

@@ -9,7 +9,7 @@ import { CopyButton } from '../../components/ui/primitives'
 import { HoloCard } from '../../components/holo/HoloCard'
 import { FOILS } from '../../components/holo/engine'
 import { useTheme } from '../../theme/ThemeProvider'
-import { ACCENTS, FINISHES } from '../../theme/options'
+import { FINISHES } from '../../theme/options'
 import { useCredential, useServiceStatus } from '../../hooks/useCredential'
 import { useGasless } from '../../hooks/useGasless'
 import { GATES_ADDRESS, REGISTRY_ADDRESS, explorer, uwiChain } from '../../config/chain'
@@ -31,7 +31,7 @@ function Section({ title, body, children }) {
 export default function Settings() {
   const { address } = useAccount()
   const { credential } = useCredential(address)
-  const { mode, setMode, accent, setAccent, finish, setFinish } = useTheme()
+  const { mode, setMode, finish, setFinish } = useTheme()
   const { data: service } = useServiceStatus()
 
   return (
@@ -40,7 +40,7 @@ export default function Settings() {
 
       <div className="rounded-[20px] border border-line bg-surface px-6 py-8 sm:px-8">
         <Section title="Appearance" body="Saved on this device.">
-          <div className="grid gap-6">
+          <div>
             <div>
               <p className="text-sm font-medium text-ink">Theme</p>
               <div className="mt-2 inline-flex rounded-full bg-surface-2 p-1">
@@ -53,25 +53,6 @@ export default function Settings() {
                     className={`rounded-full px-4 py-1.5 text-sm capitalize transition-colors ${mode === m ? 'bg-surface text-ink shadow-sm' : 'text-muted hover:text-ink'}`}
                   >
                     {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-ink">Accent</p>
-              <div className="mt-2 flex gap-3">
-                {ACCENTS.map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => setAccent(a.id)}
-                    aria-pressed={accent === a.id}
-                    className="flex flex-col items-center gap-1.5 text-xs text-muted"
-                  >
-                    <span className={`grid size-9 place-items-center rounded-full ring-offset-2 ring-offset-bg ${accent === a.id ? 'ring-2 ring-ink/60' : ''}`} style={{ background: a.swatch }}>
-                      {accent === a.id && <Check weight="bold" className="size-4 text-black/70" />}
-                    </span>
-                    {a.label}
                   </button>
                 ))}
               </div>

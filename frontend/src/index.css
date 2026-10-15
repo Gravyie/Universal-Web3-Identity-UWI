@@ -4,7 +4,7 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 /* ── Tokens ──────────────────────────────────────────────────────────────
-   Cool neutral surfaces in both themes, one accent at a time.
+   Cool neutral surfaces in both themes and a single accent.
    Shape system: interactive controls are full pills, inputs are 12px,
    surfaces (cards, panels, dialogs) are 20px. Nothing else. */
 
@@ -12,7 +12,7 @@
 [data-theme='light'] {
   color-scheme: light;
   /* Chart marks: the accent in light mode; dark mode has its own validated steps
-     (dataviz lightness band 0.48-0.67 vs the dark surface), set per accent below. */
+     (dataviz lightness band 0.48-0.67 vs the dark surface), set below. */
   --chart: var(--accent);
   --bg: #f6f6f7;
   --bg-elev: #ffffff;
@@ -46,17 +46,10 @@
   --shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 16px 40px -20px rgb(0 0 0 / 0.8);
 }
 
-[data-accent='aurora'] { --accent: #0e7d99; --accent-soft: rgb(14 125 153 / 0.1); --on-accent: #ffffff; }
-[data-accent='cobalt'] { --accent: #2f4ae0; --accent-soft: rgb(47 74 224 / 0.09); --on-accent: #ffffff; }
-[data-accent='emerald'] { --accent: #0b7f57; --accent-soft: rgb(11 127 87 / 0.09); --on-accent: #ffffff; }
-[data-accent='rose'] { --accent: #c4245a; --accent-soft: rgb(196 36 90 / 0.09); --on-accent: #ffffff; }
-[data-accent='amber'] { --accent: #a65400; --accent-soft: rgb(166 84 0 / 0.1); --on-accent: #ffffff; }
-
-[data-theme='dark'][data-accent='aurora'] { --chart: #3bb5d6; --accent: #7fe3ff; --accent-soft: rgb(127 227 255 / 0.11); --on-accent: #04161c; }
-[data-theme='dark'][data-accent='cobalt'] { --chart: #6a82f2; --accent: #8299ff; --accent-soft: rgb(130 153 255 / 0.12); --on-accent: #0b1030; }
-[data-theme='dark'][data-accent='emerald'] { --chart: #1fa66c; --accent: #3ddc97; --accent-soft: rgb(61 220 151 / 0.12); --on-accent: #03140c; }
-[data-theme='dark'][data-accent='rose'] { --chart: #e85a89; --accent: #ff7aa2; --accent-soft: rgb(255 122 162 / 0.12); --on-accent: #2a0612; }
-[data-theme='dark'][data-accent='amber'] { --chart: #c98422; --accent: #ffb547; --accent-soft: rgb(255 181 71 / 0.12); --on-accent: #241300; }
+/* One accent, stepped per theme for contrast. */
+:root,
+[data-theme='light'] { --accent: #0e7d99; --accent-soft: rgb(14 125 153 / 0.1); --on-accent: #ffffff; }
+[data-theme='dark'] { --chart: #3bb5d6; --accent: #7fe3ff; --accent-soft: rgb(127 227 255 / 0.11); --on-accent: #04161c; }
 
 @theme inline {
   --color-bg: var(--bg);

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion, useTransform } from 'motion/react'
 import { ArrowDown, ArrowRight, Pause, Play, SpeakerHigh, SpeakerSlash } from '@phosphor-icons/react'
@@ -6,6 +6,7 @@ import { CHAPTERS, NOVA } from './chapters'
 import { xpProgress } from './store'
 import { score } from './score'
 import { LogoMark } from '../components/Logo'
+import { HeroProof, HeroVisual } from './HeroVisual'
 
 const ease = [0.16, 1, 0.3, 1]
 
@@ -45,22 +46,35 @@ function Copy({ id, onPlay, onExplore }) {
   switch (id) {
     case 'hero':
       return (
-        <div className="absolute inset-x-0 bottom-[16vh] px-6 sm:px-10 md:top-1/2 md:bottom-auto md:-translate-y-1/2 lg:px-16">
-          <div className="max-w-3xl">
-            <h1 className="text-[clamp(2.6rem,5.4vw,5.25rem)] leading-[0.98] font-semibold tracking-[-0.055em] text-white">
+        <div className="absolute inset-0 mx-auto grid max-w-[1400px] content-center items-center gap-6 px-6 pt-20 pb-24 sm:px-10 md:grid-cols-[1.1fr_1fr] md:gap-4 lg:px-16">
+          <div>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease }}
+              className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] py-1 pr-3 pl-1 text-xs text-white/70 backdrop-blur"
+            >
+              <span className="rounded-full bg-[#7fe3ff] px-2 py-0.5 font-medium text-[#04161c]">New</span>
+              Sybil-proof gates, free for every human
+            </motion.p>
+            <h1 className="text-[clamp(2.5rem,5.2vw,5rem)] leading-[0.98] font-semibold tracking-[-0.055em] text-white">
               <Words text="Prove you're human once." />
               <br />
               <Words text="Use it everywhere." delay={0.25} className="text-white/45" />
             </h1>
             <Sub className="mt-6 max-w-md">A private credential that tells any app you're one unique person, and nothing else.</Sub>
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.55, ease }} className="mt-9 flex flex-wrap items-center gap-3">
-              <Link to="/app/verify" className="group inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-black">
+              <Link to="/app/verify" className="group inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-black transition-transform active:scale-[0.98]">
                 Get verified <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
-              <button type="button" onClick={onPlay} className="inline-flex h-12 items-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 text-[15px] text-white backdrop-blur hover:bg-white/10">
+              <button type="button" onClick={onPlay} className="inline-flex h-12 items-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 text-[15px] text-white backdrop-blur transition-transform hover:bg-white/10 active:scale-[0.98]">
                 <Play weight="fill" className="size-3.5" /> Watch the story
               </button>
             </motion.div>
+            <HeroProof />
+          </div>
+          <div className="hidden md:block">
+            <HeroVisual />
           </div>
         </div>
       )
@@ -76,7 +90,7 @@ function Copy({ id, onPlay, onExplore }) {
       )
     case 'farmed':
       return (
-        <div className="absolute top-1/2 right-6 max-w-xl -translate-y-1/2 text-right sm:right-14 lg:right-28">
+        <div className="absolute top-1/2 right-6 max-w-xl -translate-y-1/2 text-right sm:right-24 lg:right-44">
           <h2 className={H}>
             <Words text="One script." />
             <br />
@@ -162,19 +176,11 @@ function Copy({ id, onPlay, onExplore }) {
 
 export function Overlay({ chapters }) {
   const { index, mode, playing, goTo, play, enterPage } = chapters
-  const [sound, setSound] = useState(false)
-  const flash = useTransform(xpProgress, [NOVA - 0.006, NOVA + 0.002, NOVA + 0.03], [0, 0.55, 0])
+  const sound = useSyncExternalStore(score.subscribe, () => score.on)
+  const flash = useTransform(xpProgress, [NOVA - 0.004, NOVA + 0.001, NOVA + 0.02], [0, 0.32, 0])
   const id = CHAPTERS[index].id
 
-  const toggleSound = async () => {
-    if (sound) {
-      score.stop()
-      setSound(false)
-    } else {
-      await score.start()
-      setSound(true)
-    }
-  }
+  const toggleSound = () => (sound ? score.stop() : score.start())
 
   return (
     <>

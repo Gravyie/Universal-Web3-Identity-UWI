@@ -7,14 +7,18 @@ import { ArrowRight, ArrowUp, ArrowUpRight, Code, DeviceMobile, Door, Fingerprin
 import { xp } from '../experience/store'
 import { useChapters } from '../experience/useChapters'
 import { Overlay } from '../experience/Overlay'
+import { score } from '../experience/score'
 import { HoloCard } from '../components/holo/HoloCard'
-import { LiveTerminal } from '../components/landing/LiveTerminal'
 import { LogoMark } from '../components/Logo'
-import { useStats } from '../hooks/useCredential'
+import { useLiveStats } from '../hooks/useLiveStats'
+import { Web3 } from '../web3/Web3'
 import { useMediaQuery } from '../hooks/useMediaQuery'
-import { GATES_ADDRESS, REGISTRY_ADDRESS, explorer } from '../config/chain'
+import { GATES_ADDRESS, REGISTRY_ADDRESS, explorer } from '../config/addresses'
 
-const Stage = lazy(() => import('../experience/scene/Stage'))
+// Start fetching the 3D scene as soon as this module loads, in parallel with first paint.
+const stageImport = import('../experience/scene/Stage')
+const Stage = lazy(() => stageImport)
+const LiveTerminal = lazy(() => import('../components/landing/LiveTerminal').then((m) => ({ default: m.LiveTerminal })))
 const ease = [0.16, 1, 0.3, 1]
 const reveal = {
   initial: { opacity: 0, y: 28 },
@@ -41,13 +45,19 @@ export default function Landing() {
       xp.pointer = { x: (e.clientX / window.innerWidth) * 2 - 1, y: (e.clientY / window.innerHeight) * 2 - 1 }
     }
     window.addEventListener('pointermove', onMove)
-    return () => window.removeEventListener('pointermove', onMove)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      // the score belongs to the story: leaving the landing silences it
+      score.stop()
+    }
   }, [])
 
+  useEffect(() => score.duck(chapters.mode === 'page'), [chapters.mode])
+
   return (
-    <div data-theme="dark" className="relative min-h-dvh bg-[#020306] text-white">
+    <div data-theme="dark" className="relative min-h-dvh overflow-x-clip bg-[#020306] text-white">
       <Suspense fallback={<div className="fixed inset-0 bg-[#020306]" />}>
-        <Stage />
+        <Stage paused={chapters.mode === 'page'} />
       </Suspense>
       <div
         aria-hidden="true"
@@ -122,16 +132,16 @@ function Products() {
   return (
     <section id="explore" className="mx-auto max-w-7xl scroll-mt-10 px-5 pt-24 pb-24 sm:px-8 md:pt-36">
       <SectionTitle kicker="What you get" title={<>Three ways in. <span className="text-white/45">All live on Hedera.</span></>} />
-      <div className="mt-14 grid gap-4 lg:grid-cols-[1.25fr_1fr] lg:grid-rows-2">
-        <motion.div {...reveal} className={`${glass} relative overflow-hidden p-7 sm:p-10 lg:row-span-2`}>
+      <div className="mt-14 grid gap-4 [&>*]:min-w-0 lg:grid-cols-[1.25fr_1fr] lg:grid-rows-[auto_auto]">
+        <motion.div {...reveal} className={`${glass} relative flex flex-col overflow-hidden p-7 sm:p-10 lg:row-span-2`}>
           <div aria-hidden="true" className="absolute -top-32 -right-32 size-96 rounded-full bg-[#7fe3ff]/15 blur-3xl" />
           <p className="text-sm text-white/55">The credential</p>
           <h3 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">Prove it once.</h3>
           <p className="mt-3 max-w-md text-white/65">Scan your passport with Self. Get a soulbound card that holds a username and a hash, never your details.</p>
-          <div className="relative mx-auto mt-10 max-w-md">
-            <HoloCard username="you" address="0x7a3F1c9E0b5D2A8e4C6f1B3d9E7a2C5b8D0e4F61" tokenId={1} issuedAt={Date.now()} proof="self" label="Example UWI credential. Move your pointer over it." />
+          <div className="relative mx-auto flex w-full max-w-md flex-1 items-center py-10">
+            <HoloCard username="you" address="0x7a3F1c9E0b5D2A8e4C6f1B3d9E7a2C5b8D0e4F61" tokenId={1} issuedAt={Date.now()} proof="self" label="Example UWI credential. Move your pointer over it." className="w-full" />
           </div>
-          <Link to="/app/verify" className="group mt-10 inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-medium text-black">
+          <Link to="/app/verify" className="group inline-flex h-11 self-start items-center gap-2 rounded-full bg-white px-5 text-sm font-medium text-black">
             Get verified <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </motion.div>
@@ -161,7 +171,7 @@ function Products() {
 }
 
 function Stats() {
-  const { humans, gates } = useStats()
+  const { humans, gates } = useLiveStats()
   const items = [
     ['Verified humans', humans !== undefined ? Number(humans) : null],
     ['Gates created', gates !== undefined ? Number(gates) : null],
@@ -238,7 +248,9 @@ function Developers() {
         </ul>
       </div>
       <motion.div {...reveal} className="min-w-0">
-        <LiveTerminal />
+        <Web3 fallback={<div className="h-80 rounded-[20px] bg-white/[0.03]" />}>
+          <LiveTerminal />
+        </Web3>
       </motion.div>
     </section>
   )

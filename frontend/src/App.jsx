@@ -2,12 +2,14 @@ import { lazy, Suspense, useEffect } from 'react'
 import { Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { Toaster } from 'sonner'
-import { AppShell, RequireWallet } from './components/layout/AppShell'
+import { Web3 } from './web3/Web3'
 import { CommandMenu } from './components/layout/CommandMenu'
 import { Spinner } from './components/ui/Spinner'
 import { useTheme } from './theme/ThemeProvider'
 
 const Landing = lazy(() => import('./pages/Landing'))
+const AppShell = lazy(() => import('./components/layout/AppShell').then((m) => ({ default: m.AppShell })))
+const RequireWallet = lazy(() => import('./components/layout/AppShell').then((m) => ({ default: m.RequireWallet })))
 const Onboard = lazy(() => import('./pages/onboard/Onboard'))
 const Profile = lazy(() => import('./pages/Profile'))
 const GateJoin = lazy(() => import('./pages/GateJoin'))
@@ -72,7 +74,13 @@ export default function App() {
         />
 
         {/* Everything else lives in one app shell, so it all looks and works the same. */}
-        <Route element={<AppShell />}>
+        <Route
+          element={
+            <Web3 fallback={<div className="min-h-dvh bg-bg" />}>
+              <AppShell />
+            </Web3>
+          }
+        >
           <Route element={<Page />}>
             <Route path="app/verify" element={<Onboard />} />
             <Route path="app/developers" element={<Developers />} />
