@@ -10,11 +10,14 @@ export function createWheelIntent() {
   let lastT = -1e9
   let locked = false
   let lockDir = 0
+  let spent = false // the current gesture is used up; only a new one counts
   const recent = []
   const avg = (a) => a.reduce((x, y) => x + y, 0) / a.length
 
   const isIntent = (mag, gap) => {
     if (gap > 160) return true
+    // a new swipe starts by speeding up; momentum and a steady carry-on do not
+    if (spent) return recent.length >= 7 && mag >= 8 && avg([...recent.slice(-2), mag]) > avg(recent.slice(-7, -3)) * 1.35
     if (recent.length < 8 || mag < 6) return false
     // inertia decays; intent holds steady or grows
     return avg([...recent.slice(-3), mag]) >= avg(recent.slice(-7, -3))
@@ -28,8 +31,10 @@ export function createWheelIntent() {
     feed(dy, now, settled) {
       const gap = now - lastT
       lastT = now
+      const fresh = isIntent(Math.abs(dy), gap)
+      if (spent && fresh) spent = false
       const mag = Math.abs(dy)
-      const intent = isIntent(mag, gap)
+      const intent = fresh
       recent.push(mag)
       if (recent.length > 8) recent.shift()
       const dir = Math.sign(dy)
@@ -54,6 +59,13 @@ export function createWheelIntent() {
       locked = true
       lockDir = dir
       acc = 0
+    },
+    /** End the current gesture: nothing more from it counts, only a new scroll. */
+    spend(dir) {
+      this.lock(dir)
+      spent = true
+      lastT = Infinity
+      recent.length = 0
     },
     reset() {
       acc = 0

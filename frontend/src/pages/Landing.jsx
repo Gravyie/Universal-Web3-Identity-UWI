@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import * as Accordion from '@radix-ui/react-accordion'
 import { motion, useReducedMotion } from 'motion/react'
@@ -61,14 +61,34 @@ export default function Landing() {
 
   useEffect(() => score.duck(chapters.mode === 'page'), [chapters.mode])
 
+  // The page scrolls natively over the story. As it does, the story's text
+  // fades and the scene dims; once it is fully covered the scene stops drawing.
+  const root = useRef(null)
+  const [faded, setFaded] = useState(false)
+  const [covered, setCovered] = useState(false)
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY
+      const h = window.innerHeight
+      root.current?.style.setProperty('--story-fade', String(Math.min(1, y / (h * 0.5))))
+      root.current?.style.setProperty('--story-dim', String(Math.min(1, y / h)))
+      setFaded(y > h * 0.25)
+      setCovered(y > h * 1.05)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
-    <div data-theme="dark" className="relative min-h-dvh overflow-x-clip bg-[#020306] text-white">
+    <div ref={root} data-theme="dark" className="relative min-h-dvh overflow-x-clip bg-[#020306] text-white">
       <Suspense fallback={<div className="fixed inset-0 bg-[#020306]" />}>
-        <Stage paused={chapters.mode === 'page'} />
+        <Stage paused={chapters.mode === 'page' && covered} />
       </Suspense>
       <div
         aria-hidden="true"
-        className={`pointer-events-none fixed inset-0 z-10 bg-[#05040c] transition-opacity duration-1000 ${chapters.mode === 'page' ? 'opacity-60' : 'opacity-0'}`}
+        className="pointer-events-none fixed inset-0 z-10 bg-[#05040c]"
+        style={{ opacity: 'calc(var(--story-dim, 0) * 0.6)' }}
       />
       <div
         aria-hidden="true"
@@ -79,7 +99,7 @@ export default function Landing() {
         }}
       />
       {!revealed && <Preloader onDone={reveal} />}
-      <Overlay chapters={chapters} revealed={revealed} />
+      <Overlay chapters={chapters} revealed={revealed} faded={faded} />
 
       {/* The experience occupies the first screen; the page follows it. */}
       <div className="h-dvh" aria-hidden="true" />

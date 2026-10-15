@@ -9,8 +9,8 @@ import { NOVA, P, easeInOut, seg } from '../chapters'
 const SHOTS = [
   { p: P.hero, pos: [0, 0.2, 17], look: [0, 0.2, 0], fov: 34 },
   { p: P.problem, pos: [-4.2, 1.2, 8.2], look: [0.6, 0.2, 0], fov: 46 },
-  { p: P.void, pos: [0, 1.5, 12.5], look: [0, 0, 0], fov: 32 },
-  { p: P.collapse, pos: [3.6, 1.4, 11.5], look: [-0.6, 0, 0], fov: 32 },
+  { p: P.void, pos: [0, 1.0, 10.5], look: [0, 0, 0], fov: 40 },
+  { p: P.collapse, pos: [4.6, 5.4, 8.6], look: [0, -0.3, 0], fov: 38 },
   { p: NOVA, pos: [0, 0.3, 7.2], look: [0, 0, 0], fov: 40 },
   { p: P.dawn, pos: [-1.0, -0.2, 6.9], look: [-1.55, -0.5, 0], fov: 40 },
   { p: P.everywhere, pos: [0, 0.75, 10.8], look: [0, -0.35, -1], fov: 44 },

@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
-import { xp } from '../store'
+import { novaTime, xp } from '../store'
 import { NOVA, P, seg, smooth } from '../chapters'
 import { HoloCard } from '../../components/holo/HoloCard'
 import { HERO_CARD } from '../heroCard'
@@ -31,7 +31,8 @@ export function Credential() {
     const g = group.current
     const node = el.current
     if (!g || !node) return
-    const born = smooth(seg(p, NOVA + 0.005, P.dawn - 0.035))
+    // condenses out of the remnant on the explosion's clock
+    const born = p >= NOVA ? smooth(seg(novaTime(), 1.4, 3)) : 0
     g.visible = born > 0.001
     node.style.visibility = g.visible ? 'visible' : 'hidden'
     if (!g.visible) return
@@ -46,6 +47,12 @@ export function Credential() {
       width.current = w
       node.style.width = `${w}px`
     }
+    // tell the beams exactly where the card's edges are this frame
+    xp.card.x = world.x
+    xp.card.y = world.y
+    xp.card.z = world.z
+    xp.card.halfW = (CARD_W * (0.25 + 0.75 * born)) / 2
+    xp.card.halfH = xp.card.halfW / 1.586
     const spin = xp.reduced ? 0 : (1 - born) * 900
     node.style.transform = `perspective(1400px) rotateY(${spin.toFixed(1)}deg)`
     node.style.opacity = String(born)

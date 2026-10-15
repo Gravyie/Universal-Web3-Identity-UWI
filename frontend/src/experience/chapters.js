@@ -7,7 +7,7 @@ export const CHAPTERS = [
   { id: 'problem', name: 'The problem', sound: 'swarm', hold: 2.6 },
   { id: 'void', name: 'The proof', sound: 'void', hold: 1.8 },
   { id: 'collapse', name: 'Collapse', sound: 'void', hold: 1.8 },
-  { id: 'dawn', name: 'Private', sound: 'dawn', hold: 2.2 },
+  { id: 'dawn', name: 'Private', sound: 'dawn', hold: 3.6 },
   { id: 'everywhere', name: 'Everywhere', sound: 'bloom', hold: 2.8 },
   { id: 'cta', name: 'Begin', sound: 'bloom', hold: 0 },
 ].map((c, i, all) => ({ ...c, p: i / (all.length - 1) }))

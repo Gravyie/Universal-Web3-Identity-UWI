@@ -26,7 +26,7 @@ const BOUND = 18 // Rs: rays are traced inside this sphere, straight lines outsi
 const fragment = (steps) => /* glsl */ `
   uniform mat4 uInv;
   uniform vec3 uCam;
-  uniform float uTime, uIntensity;
+  uniform float uTime, uIntensity, uDrain;
   varying vec3 vWorld;
   varying vec2 vUv;
 
@@ -82,7 +82,8 @@ const fragment = (steps) => /* glsl */ `
     float g = D * sqrt(1.0 - 1.0 / r);
     vec3 col = blackbody(4300.0 * temp * g) * pow(g, 3.0) * temp * temp;
 
-    float edge = smoothstep(3.0, 3.2, r) * (1.0 - smoothstep(6.5, 13.0, r));
+    // as the hole swallows its last meal the disk drains inward from the outside
+    float edge = smoothstep(3.0, 3.2, r) * (1.0 - smoothstep(6.5 * (1.0 - 0.5 * uDrain), 13.0 * (1.0 - 0.68 * uDrain), r));
     float alpha = clamp(density * edge * 1.15, 0.0, 1.0);
     return vec4(col * density * edge * 1.25, alpha);
   }
@@ -161,7 +162,43 @@ function radialSprite(stops) {
   return new THREE.CanvasTexture(c)
 }
 
+/*
+ * Relativistic jets. A black hole feeding hard launches twin beams of plasma
+ * along its spin axis, perpendicular to the disk, at close to light speed.
+ * Drawn on a ribbon that turns about the axis to face the camera.
+ */
+const jetFragment = /* glsl */ `
+  uniform float uTime, uPower;
+  varying vec2 vUv;
+  float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float noise(vec2 p) {
+    vec2 i = floor(p), f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i), hash(i + vec2(1, 0)), u.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), u.x), u.y);
+  }
+  float fbm(vec2 p) { float v = 0.0, a = 0.5; for (int i = 0; i < 4; i++) { v += a * noise(p); p *= 2.1; a *= 0.5; } return v; }
+  void main() {
+    float s = vUv.y;
+    float x = (vUv.x - 0.5) * 2.0;
+    float w = 0.05 + 0.5 * pow(s, 0.8);
+    float sheath = exp(-pow(x / w, 2.0) * 2.5);
+    float spine = exp(-pow(x / (w * 0.22), 2.0));
+    float flow = fbm(vec2(x * 2.5 / w, s * 7.0 - uTime * 2.6));
+    float knots = 0.55 + 0.9 * pow(0.5 + 0.5 * sin(s * 26.0 - uTime * 8.0), 5.0);
+    float fall = pow(1.0 - s, 1.5) * smoothstep(0.0, 0.05, s);
+    vec3 col = vec3(0.42, 0.58, 1.0) * sheath * (0.35 + flow * 0.9) + vec3(0.8, 0.9, 1.0) * spine * knots * 1.4;
+    gl_FragColor = vec4(col * fall * uPower, 1.0);
+  }
+`
+
 const inv = new THREE.Matrix4()
+const AXIS = new THREE.Vector3(0, 0, 1).applyEuler(new THREE.Euler(-Math.PI / 2 + DISK_TILT, 0, 0))
+const toCam = new THREE.Vector3()
+const jx = new THREE.Vector3()
+const jz = new THREE.Vector3()
+const jy = new THREE.Vector3()
+const jb = new THREE.Matrix4()
+const jetGeometry = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0)
 const cam = new THREE.Vector3()
 
 /**
@@ -175,7 +212,7 @@ export function BlackHole() {
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
-        uniforms: { uInv: { value: new THREE.Matrix4() }, uCam: { value: new THREE.Vector3() }, uTime: { value: 0 }, uIntensity: { value: 1 } },
+        uniforms: { uInv: { value: new THREE.Matrix4() }, uCam: { value: new THREE.Vector3() }, uTime: { value: 0 }, uIntensity: { value: 1 }, uDrain: { value: 0 } },
         vertexShader: vertex,
         fragmentShader: fragment(xp.mobile ? 110 : 170),
         transparent: true,
@@ -185,6 +222,20 @@ export function BlackHole() {
         blending: THREE.CustomBlending,
         blendSrc: THREE.OneFactor,
         blendDst: THREE.OneMinusSrcAlphaFactor,
+      }),
+    [],
+  )
+  const jets = useRef([])
+  const jetMaterial = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        uniforms: { uTime: { value: 0 }, uPower: { value: 0 } },
+        vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        fragmentShader: jetFragment,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
       }),
     [],
   )
@@ -202,9 +253,26 @@ export function BlackHole() {
     g.scale.setScalar(s)
     if (!xp.reduced) g.rotation.z = THREE.MathUtils.damp(g.rotation.z, xp.pointer.x * 0.04, 2, dt)
 
-    // feeding makes the disk flare; the implosion blows it out
-    const feed = 1 + 0.35 * Math.sin(Math.PI * seg(p, P.void + 0.03, P.collapse))
-    material.uniforms.uIntensity.value = feed * (1 + implode * 3)
+    // feeding makes the disk flare and fires the jets; then the disk drains in and the hole implodes
+    const feed = 1 + 0.45 * smooth(seg(p, P.void + 0.03, P.collapse))
+    const drain = smooth(seg(p, P.collapse + 0.005, NOVA - 0.008))
+    material.uniforms.uIntensity.value = feed * (1 + drain * 1.6 + implode * 3)
+    material.uniforms.uDrain.value = drain
+    const power = smooth(seg(p, P.void + 0.05, P.collapse - 0.01)) * (1 - drain)
+    jetMaterial.uniforms.uPower.value = power
+    jetMaterial.uniforms.uTime.value = state.clock.elapsedTime
+    jets.current.forEach((j, i) => {
+      if (!j) return
+      j.visible = power > 0.01
+      if (!j.visible) return
+      // the ribbon runs along the spin axis and turns about it to face the camera
+      jy.copy(AXIS).multiplyScalar(i ? -1 : 1)
+      toCam.copy(state.camera.position).sub(g.position)
+      jx.crossVectors(jy, toCam).normalize()
+      jz.crossVectors(jx, jy)
+      j.quaternion.setFromRotationMatrix(jb.makeBasis(jx, jy, jz))
+      j.position.copy(jy).multiplyScalar(0.25)
+    })
     material.uniforms.uTime.value = state.clock.elapsedTime
     billboard.current.quaternion.copy(state.camera.quaternion)
     frame.current.updateWorldMatrix(true, false)
@@ -222,6 +290,9 @@ export function BlackHole() {
         <sphereGeometry args={[0.96, 48, 48]} />
         <meshBasicMaterial color="black" />
       </mesh>
+      {[0, 1].map((i) => (
+        <mesh key={i} ref={(el) => (jets.current[i] = el)} geometry={jetGeometry} material={jetMaterial} scale={[2.4, 11, 1]} visible={false} renderOrder={3} frustumCulled={false} />
+      ))}
       <group ref={billboard}>
         <mesh material={material} renderOrder={2} frustumCulled={false}>
           <planeGeometry args={[BOUND * RS * 2.1, BOUND * RS * 2.1]} />

@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Sparkles } from '@react-three/drei'
 import * as THREE from 'three'
-import { xp } from '../store'
+import { novaTime, xp } from '../store'
 import { NOVA, P, seg, smooth } from '../chapters'
 
 // Gas clouds left by the supernova: domain-warped noise on camera-facing
@@ -63,7 +63,7 @@ export function Nebula() {
     const on = xp.progress > NOVA - 0.005
     root.current.visible = on
     if (!on) return
-    const fade = smooth(seg(xp.progress, NOVA - 0.005, P.dawn))
+    const fade = smooth(seg(novaTime(), 0.5, 3.4))
     root.current.traverse((o) => o.material?.uniforms?.uFade && (o.material.uniforms.uFade.value = fade))
   })
   return (

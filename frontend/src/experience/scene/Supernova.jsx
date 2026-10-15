@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { xp } from '../store'
+import { novaTime, xp } from '../store'
 import { NOVA, P, seg } from '../chapters'
 
 const SIZE = 30 // world units covered by the billboard
@@ -112,14 +112,16 @@ export function Supernova() {
 
   useFrame((state) => {
     const p = xp.progress
-    const tau = seg(p, NOVA - 0.004, NOVA + 0.085)
-    const on = tau > 0 && tau < 1
+    // runs on its own clock once triggered, so it always plays out in full
+    const t0 = novaTime()
+    const tau = Math.min(1, t0 / 3.6)
+    const on = p >= NOVA && t0 > 0 && tau < 1
     mesh.current.visible = on
     if (!on) return
     mesh.current.quaternion.copy(state.camera.quaternion)
     material.uniforms.uTau.value = tau
     material.uniforms.uTime.value = state.clock.elapsedTime
-    material.uniforms.uCard.value = seg(p, NOVA + 0.01, P.dawn - 0.04)
+    material.uniforms.uCard.value = seg(t0, 1.4, 3)
   })
 
   return (

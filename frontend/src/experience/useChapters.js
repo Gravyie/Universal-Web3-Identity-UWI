@@ -36,13 +36,15 @@ export function useChapters() {
     target.current = Math.max(0, Math.min(LAST, i)) * STEP
   }, [])
 
-  const enterPage = useCallback(() => {
+  // From the wheel, the page just takes over and the same scroll carries on
+  // natively; from a button, key or swipe, it glides down to the page.
+  const enterPage = useCallback((glide = true) => {
     modeRef.current = 'page'
     xp.inPage = true
     setMode('page')
     setPlaying(false)
     document.documentElement.style.overflow = ''
-    requestAnimationFrame(() => window.scrollTo({ top: window.innerHeight, behavior: xp.reduced ? 'auto' : 'smooth' }))
+    if (glide) requestAnimationFrame(() => window.scrollTo({ top: window.innerHeight, behavior: xp.reduced ? 'auto' : 'smooth' }))
   }, [])
 
   const enterChapters = useCallback(() => {
@@ -73,7 +75,11 @@ export function useChapters() {
         }
         if (Math.abs(goal - xp.progress) < 1e-5 && Math.abs(vel.current) < 1e-4) xp.progress = goal
       }
-      if (prev < NOVA && xp.progress >= NOVA) score.nova(0.05)
+      if (prev < NOVA && xp.progress >= NOVA) {
+        score.nova(0.05)
+        xp.novaStart = now / 1000
+      }
+      if (xp.progress < NOVA - 0.002) xp.novaStart = 0
       const i = Math.round(xp.progress / STEP)
       if (i !== idx.current) {
         idx.current = i
@@ -94,25 +100,23 @@ export function useChapters() {
 
     const wheel = createWheelIntent()
     let locked = false // touch: a move is in flight
-    let lastWheel = 0
-    let topSince = 0 // when page mode reached the top (to re-enter the story deliberately)
     let leanTimer = 0
 
     const settled = () => Math.abs(xp.progress - target.current) < STEP * 0.3
 
-    const step = (dir) => {
+    const step = (dir, glide = true) => {
       setPlaying(false)
       const cur = Math.round(target.current / STEP)
       lean.current = 0
       wheel.lock(dir)
       locked = true
-      if (dir > 0 && cur === LAST) return enterPage()
+      if (dir > 0 && cur === LAST) return enterPage(glide)
       goTo(cur + dir)
     }
 
     const input = (dy, now) => {
       const r = wheel.feed(dy, now, settled())
-      if (r.step) return step(r.step)
+      if (r.step) return step(r.step, false)
       lean.current = r.lean * LEAN
       clearTimeout(leanTimer)
       leanTimer = setTimeout(() => {
@@ -124,17 +128,14 @@ export function useChapters() {
     const onWheel = (e) => {
       const now = performance.now()
       if (modeRef.current === 'page') {
-        if (window.scrollY > 0) {
-          topSince = 0
-          return
-        }
-        if (!topSince) topSince = now
-        // only a fresh upward scroll at the top goes back into the story, not leftover momentum
-        if (e.deltaY < -4 && now - topSince > 300 && now - lastWheel > 120) {
+        // The page scrolls natively. Scrolling up past its top lands back on the
+        // last chapter, and that scroll ends there: going further back takes a
+        // new scroll, just like reaching the top of any page.
+        if (window.scrollY <= 0 && e.deltaY < 0) {
           e.preventDefault()
           enterChapters()
+          wheel.spend(-1)
         }
-        lastWheel = now
         return
       }
       e.preventDefault()
@@ -187,26 +188,12 @@ export function useChapters() {
       e.preventDefault()
       step(dir)
     }
-    // Scrolling back up out of the page hands straight back to the story, so the
-    // empty first screen behind the page is never shown on its own.
-    let lastY = window.scrollY
-    const onScroll = () => {
-      const y = window.scrollY
-      const up = y < lastY
-      lastY = y
-      if (modeRef.current === 'page' && up && y < window.innerHeight * 0.6) {
-        wheel.lock(-1) // leftover momentum is ignored; a deliberate scroll carries on into the story
-        enterChapters()
-      }
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('wheel', onWheel, { passive: false })
     window.addEventListener('touchstart', onTouchStart, { passive: true })
     window.addEventListener('touchmove', onTouchMove, { passive: false })
     window.addEventListener('touchend', onTouchEnd, { passive: true })
     window.addEventListener('keydown', onKey)
     return () => {
-      window.removeEventListener('scroll', onScroll)
       window.removeEventListener('wheel', onWheel)
       window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchmove', onTouchMove)
