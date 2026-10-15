@@ -9,8 +9,8 @@ import { AppShell } from './components/layout/AppShell'
 import { CommandMenu } from './components/layout/CommandMenu'
 import { Spinner } from './components/ui/Spinner'
 import { useTheme } from './theme/ThemeProvider'
-import Home from './pages/Home'
 
+const Film = lazy(() => import('./pages/Film'))
 const Onboard = lazy(() => import('./pages/onboard/Onboard'))
 const Profile = lazy(() => import('./pages/Profile'))
 const GateJoin = lazy(() => import('./pages/GateJoin'))
@@ -20,9 +20,7 @@ const Overview = lazy(() => import('./pages/app/Overview'))
 const Gates = lazy(() => import('./pages/app/Gates'))
 const GateDetail = lazy(() => import('./pages/app/GateDetail'))
 const Settings = lazy(() => import('./pages/app/Settings'))
-const LabCinematic = lazy(() => import('./pages/lab/Cinematic'))
-const LabEditorial = lazy(() => import('./pages/lab/Editorial'))
-const LabTactile = lazy(() => import('./pages/lab/Tactile'))
+
 
 function ScrollManager() {
   const { pathname, hash } = useLocation()
@@ -88,7 +86,6 @@ export default function App() {
       <CommandMenu />
       <Routes>
         <Route element={<SiteLayout />}>
-          <Route index element={<Home />} />
           <Route path="start" element={<Onboard />} />
           <Route path="u/:handle" element={<Profile />} />
           <Route path="g/:id" element={<GateJoin />} />
@@ -98,10 +95,15 @@ export default function App() {
           <Route path="id/:handle" element={<RedirectToProfile />} />
           <Route path="*" element={<NotFound />} />
         </Route>
-        {/* Design direction prototypes, compared side by side before the revamp. */}
-        <Route path="lab/cinematic" element={<Suspense fallback={<Fallback />}><LabCinematic /></Suspense>} />
-        <Route path="lab/editorial" element={<Suspense fallback={<Fallback />}><LabEditorial /></Suspense>} />
-        <Route path="lab/tactile" element={<Suspense fallback={<Fallback />}><LabTactile /></Suspense>} />
+        {/* The landing page is a film with its own chrome, outside the site layout. */}
+        <Route
+          index
+          element={
+            <Suspense fallback={<div className="min-h-dvh bg-[#020306]" />}>
+              <Film />
+            </Suspense>
+          }
+        />
         <Route path="app" element={<AppShell />}>
           <Route element={<Page />}>
             <Route index element={<Overview />} />
