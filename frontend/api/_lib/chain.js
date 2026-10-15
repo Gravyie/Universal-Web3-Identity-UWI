@@ -1,17 +1,19 @@
 import { BaseError, ContractFunctionRevertedError, createPublicClient, createWalletClient, defineChain, http } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { ERROR_MESSAGES, gatesAbi, registryAbi } from '../../src/config/abi.js'
+import { DEFAULT_CHAIN_ID, DEFAULT_GATES_ADDRESS, DEFAULT_REGISTRY_ADDRESS } from '../../src/config/deployment.js'
 
 const env = process.env
 
 export const config = {
-  chainId: Number(env.VITE_CHAIN_ID || 296),
+  chainId: Number(env.VITE_CHAIN_ID || DEFAULT_CHAIN_ID),
   rpcUrl: env.RPC_URL || env.VITE_RPC_URL || 'https://testnet.hashio.io/api',
-  registry: env.VITE_REGISTRY_ADDRESS,
-  gates: env.VITE_GATES_ADDRESS,
+  // same defaults as the app, so the API works with no address variables set
+  registry: env.VITE_REGISTRY_ADDRESS || DEFAULT_REGISTRY_ADDRESS,
+  gates: env.VITE_GATES_ADDRESS || DEFAULT_GATES_ADDRESS,
   // Demo credentials exist so testnet can be tried without a passport. They are
   // off by default on Hedera mainnet (295); set DEMO_ISSUANCE to override.
-  demoIssuance: env.DEMO_ISSUANCE ? env.DEMO_ISSUANCE !== 'false' : Number(env.VITE_CHAIN_ID || 296) !== 295,
+  demoIssuance: env.DEMO_ISSUANCE ? env.DEMO_ISSUANCE !== 'false' : Number(env.VITE_CHAIN_ID || DEFAULT_CHAIN_ID) !== 295,
   self: {
     endpoint: env.SELF_ENDPOINT || env.VITE_SELF_ENDPOINT || '',
     scope: env.SELF_SCOPE || env.VITE_SELF_SCOPE || 'uwi-identity',
