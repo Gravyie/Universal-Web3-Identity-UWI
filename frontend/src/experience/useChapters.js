@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { CHAPTERS, NOVA, P } from './chapters'
 import { NOVA_END } from './store'
+
+const CARD_FORMED = 2.4 // seconds into the supernova when the card is complete
 import { xp } from './store'
 import { score } from './score'
 import { createWheelIntent } from './wheelIntent'
@@ -89,7 +91,9 @@ export function useChapters() {
       // stepping back (fast after a long jump), and snaps to zero once far out of shot.
       if (target.current < NOVA) {
         if (xp.progress < NOVA - STEP * 1.2) xp.novaT = 0
-        else xp.novaT = Math.max(0, xp.novaT - dt * (stepBack ? 1 : 4))
+        // Stepping back: the quiet tail (after the card has formed) rewinds quickly; from there the
+        // explosion plays backwards at exactly its forward pace, so both directions take the same time.
+        else xp.novaT = Math.max(0, xp.novaT - dt * (stepBack ? (xp.novaT > CARD_FORMED ? 5 : 1) : 4))
       } else if (xp.progress >= NOVA) xp.novaT = Math.min(NOVA_END, xp.novaT + dt * (xp.progress > NOVA + STEP * 0.75 ? 3 : 1))
       const i = Math.round(xp.progress / STEP)
       if (i !== idx.current) {
