@@ -12,6 +12,7 @@ import { Supernova } from './Supernova'
 import { Nebula } from './Nebula'
 import { Credential } from './Credential'
 import { Portals } from './Portals'
+import { Fingerprint } from './Fingerprint'
 
 /** Deep space, visible until the supernova. */
 function Space() {
@@ -21,7 +22,7 @@ function Space() {
   })
   return (
     <group ref={ref}>
-      <Sparkles count={xp.mobile ? 160 : 420} scale={[34, 20, 34]} size={1.8} speed={0.15} opacity={0.65} color="#cfe0ff" />
+      <Sparkles count={xp.mobile ? 160 : 420} scale={[34, 20, 34]} size={1.6} speed={0.12} opacity={0.5} color="#cfe0ff" />
       <Swarm count={xp.mobile ? 700 : 1800} />
       <BlackHole />
     </group>
@@ -54,6 +55,7 @@ export default function Stage({ paused = false }) {
           <Lightformer form="ring" intensity={3} color="#7f8cff" position={[0, 4, -5]} scale={6} />
         </Environment>
         <CameraRig />
+        <Fingerprint />
         <Space />
         <Supernova />
         <Nebula />

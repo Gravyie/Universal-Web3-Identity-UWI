@@ -83,7 +83,7 @@ export function Swarm({ count = 1800 }) {
     const dt = Math.min(delta, 0.05)
     const m = mesh.current
     if (!m) return
-    m.visible = p < P.collapse + 0.04
+    m.visible = p > 0.015 && p < P.collapse + 0.04
     if (!m.visible) return
     if (!m.instanceColor) {
       m.setColorAt(0, tint.setRGB(1, 1, 1))
@@ -93,7 +93,8 @@ export function Swarm({ count = 1800 }) {
     const pull = smooth(seg(p, P.void - 0.06, P.collapse))
     color.copy(COLD).lerp(THREAT, threat).lerp(HOT, pull * 0.8)
     m.material.color.copy(color)
-    m.material.opacity = 0.45 + 0.55 * threat
+    // absent on the hero: the wallets appear as the print shatters into them
+    m.material.opacity = (0.45 + 0.55 * threat) * smooth(seg(p, 0.02, P.many * 0.85))
 
     for (let i = 0; i < count; i++) {
       const c = chips[i]

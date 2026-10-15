@@ -21,6 +21,7 @@ const SHOTS = [
 
 // Phones are too narrow for side-by-side framing; centre the card and keep text below it.
 const MOBILE = {
+  [P.hero]: { pos: [1.1, -1.6, 21], look: [1.1, -4.7, 0] },
   [P.dawn]: { pos: [0, 0.9, 10], look: [0, -0.5, -2] },
   [P.card]: { pos: [0, 1.3, 7.2], look: [0, -0.2, 0] },
   [P.cta]: { pos: [0, 1.4, 8.6], look: [0, -0.1, 0] },

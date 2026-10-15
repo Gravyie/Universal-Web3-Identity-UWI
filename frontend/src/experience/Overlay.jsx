@@ -6,17 +6,17 @@ import { CHAPTERS, NOVA } from './chapters'
 import { xpProgress } from './store'
 import { score } from './score'
 import { LogoMark } from '../components/Logo'
-import { HeroCard, HeroProof } from './HeroVisual'
+import { HeroProof } from './HeroVisual'
 
 const ease = [0.16, 1, 0.3, 1]
 
-function Words({ text, className, delay = 0 }) {
+function Words({ text, className, wordClassName = '', delay = 0 }) {
   return (
     <span className={className}>
       {text.split(' ').map((w, i) => (
         <motion.span
           key={i}
-          className="inline-block whitespace-pre"
+          className={`inline-block whitespace-pre ${wordClassName}`}
           initial={{ opacity: 0, y: '0.55em', filter: 'blur(10px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 0.9, delay: delay + i * 0.05, ease }}
@@ -39,7 +39,6 @@ const Sub = ({ children, delay = 0.35, className = '' }) => (
   </motion.p>
 )
 
-const DISPLAY = 'text-[clamp(3.1rem,13.5vw,5rem)] md:text-[clamp(4rem,10.4vw,10.5rem)] leading-[0.86] font-semibold tracking-[-0.065em] text-white'
 const H = 'text-[clamp(2.2rem,5.4vw,5rem)] leading-[1.02] font-semibold tracking-[-0.05em] text-white text-balance'
 
 /** What each chapter says, and where on screen it says it. */
@@ -47,43 +46,40 @@ function Copy({ id, onPlay, onExplore }) {
   switch (id) {
     case 'hero':
       return (
-        <div className="absolute inset-0 flex flex-col px-6 pt-20 pb-24 sm:px-10 sm:pt-24 lg:px-16">
-          <h1 className="sr-only">Prove you're human once. Use it everywhere.</h1>
-          {/* the stage: two lines of display type on a diagonal, the card rising between them */}
-          <div className="relative flex min-h-0 flex-1 flex-col justify-between">
-            <p aria-hidden="true" className={`${DISPLAY} self-start`}>
-              <Words text="Prove you're" />
-            </p>
-            <div className="pointer-events-auto relative z-10 flex flex-1 items-center justify-center py-4 md:absolute md:inset-0 md:py-0">
-              <HeroCard />
-            </div>
-            <p aria-hidden="true" className={`${DISPLAY} self-end text-right`}>
-              <Words text="human." delay={0.2} />
-              <Words text="Once." delay={0.32} className="text-white/35" />
-            </p>
+        <div className="absolute inset-0 flex flex-col justify-end px-6 pt-20 pb-24 sm:px-10 md:justify-center md:pb-10 lg:px-16">
+          <div className="max-w-[min(46rem,52vw)] max-md:max-w-none">
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.2, ease }}
+              className="flex items-center gap-2.5 text-[13px] text-white/60"
+            >
+              <span className="relative flex size-1.5">
+                <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/70" />
+                <span className="relative size-1.5 rounded-full bg-emerald-400" />
+              </span>
+              Proof of personhood, live on Hedera
+            </motion.p>
+            <h1 className="mt-5 text-[clamp(2.7rem,11vw,4rem)] leading-[0.94] font-semibold tracking-[-0.055em] text-white md:text-[clamp(3.4rem,6.4vw,6.6rem)]">
+              <Words text="Prove you're human" delay={0.35} />
+              <br />
+              <Words text="once." delay={0.6} wordClassName="bg-gradient-to-r from-[#7fe3ff] via-[#b9a6ff] to-[#ff9ad5] bg-clip-text pb-[0.08em] text-transparent" />
+            </h1>
+            <Sub delay={0.85} className="mt-6 max-w-[30rem]">
+              Then use it everywhere. One private credential tells any app you're a unique person, and nothing else about you.
+            </Sub>
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 1.05, ease }} className="mt-9 flex flex-wrap items-center gap-3">
+              <Link to="/app/verify" className="group inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-black transition-transform active:scale-[0.98]">
+                Get verified <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+              <button type="button" onClick={onPlay} className="inline-flex h-12 items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-5 text-[15px] text-white backdrop-blur transition-transform hover:bg-white/10 active:scale-[0.98]">
+                <Play weight="fill" className="size-3.5" /> Watch the story
+              </button>
+            </motion.div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 1.3 }} className="mt-12 hidden border-t border-white/10 pt-6 md:block">
+              <HeroProof />
+            </motion.div>
           </div>
-          {/* the base: what it is, what to do, and the live numbers */}
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.9, ease }}
-            className="mt-8 grid items-end gap-6 border-t border-white/10 pt-6 md:grid-cols-[1fr_auto]"
-          >
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:gap-8">
-              <p className="max-w-sm text-[15px] leading-relaxed text-white/65">
-                One private credential that tells any app you're a unique person, and nothing else. Use it everywhere.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Link to="/app/verify" className="group inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-black transition-transform active:scale-[0.98]">
-                  Get verified <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-                <button type="button" onClick={onPlay} className="inline-flex h-12 items-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 text-[15px] text-white backdrop-blur transition-transform hover:bg-white/10 active:scale-[0.98]">
-                  <Play weight="fill" className="size-3.5" /> Watch the story
-                </button>
-              </div>
-            </div>
-            <HeroProof className="hidden md:flex" />
-          </motion.div>
         </div>
       )
     case 'many':
