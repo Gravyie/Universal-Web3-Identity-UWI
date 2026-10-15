@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { xp } from '../store'
@@ -139,6 +139,11 @@ export function Swarm({ count = 1800 }) {
     })
   }, [count])
 
+  // instance colours exist from the start, so the shader warm-up compiles the variant that draws
+  useLayoutEffect(() => {
+    if (mesh.current && !mesh.current.instanceColor) mesh.current.setColorAt(0, tint.setRGB(1, 1, 1))
+  }, [])
+
   useFrame((state, delta) => {
     const p = xp.progress
     const t = state.clock.elapsedTime
@@ -147,10 +152,6 @@ export function Swarm({ count = 1800 }) {
     if (!m) return
     m.visible = p > 0.004 && p < P.collapse + 0.04
     if (!m.visible) return
-    if (!m.instanceColor) {
-      m.setColorAt(0, tint.setRGB(1, 1, 1))
-      m.material.needsUpdate = true
-    }
     // absent on the hero: the wallets are born out of the print as it fractures
     m.material.opacity = smooth(seg(p, 0.004, 0.04))
     // the lens sits at the hole, in view space, and is as strong as the hole is grown

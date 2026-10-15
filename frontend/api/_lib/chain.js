@@ -9,7 +9,9 @@ export const config = {
   rpcUrl: env.RPC_URL || env.VITE_RPC_URL || 'https://testnet.hashio.io/api',
   registry: env.VITE_REGISTRY_ADDRESS,
   gates: env.VITE_GATES_ADDRESS,
-  demoIssuance: env.DEMO_ISSUANCE !== 'false',
+  // Demo credentials exist so testnet can be tried without a passport. They are
+  // off by default on Hedera mainnet (295); set DEMO_ISSUANCE to override.
+  demoIssuance: env.DEMO_ISSUANCE ? env.DEMO_ISSUANCE !== 'false' : Number(env.VITE_CHAIN_ID || 296) !== 295,
   self: {
     endpoint: env.SELF_ENDPOINT || env.VITE_SELF_ENDPOINT || '',
     scope: env.SELF_SCOPE || env.VITE_SELF_SCOPE || 'uwi-identity',

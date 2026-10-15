@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { Component, lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import * as Accordion from '@radix-ui/react-accordion'
 import { motion, useReducedMotion } from 'motion/react'
@@ -8,6 +8,7 @@ import { xp } from '../experience/store'
 import { useChapters } from '../experience/useChapters'
 import { Overlay } from '../experience/Overlay'
 import { Preloader } from '../experience/Preloader'
+import { hasWebGL, loading } from '../experience/loading'
 import { score } from '../experience/score'
 import { HoloCard } from '../components/holo/HoloCard'
 import { HERO_CARD } from '../experience/heroCard'
@@ -17,9 +18,41 @@ import { Web3 } from '../web3/Web3'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { GATES_ADDRESS, REGISTRY_ADDRESS, explorer } from '../config/addresses'
 
-// Start fetching the 3D scene as soon as this module loads, in parallel with first paint.
-const stageImport = import('../experience/scene/Stage')
+// Start fetching the 3D scene as soon as this module loads, in parallel with first paint,
+// but only where it can run.
+const webgl = typeof window !== 'undefined' && hasWebGL()
+const stageImport = webgl ? import('../experience/scene/Stage') : null
+stageImport?.then(
+  () => loading.mark('scene'),
+  () => loading.fail('scene-load'),
+)
+if (!webgl && typeof window !== 'undefined') loading.fail('no-webgl')
 const Stage = lazy(() => stageImport)
+
+/** If the 3D scene throws (driver bugs, lost contexts that don't come back), the page carries on without it. */
+class SceneBoundary extends Component {
+  state = { failed: false }
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+  componentDidCatch(error) {
+    console.error('[uwi] 3D scene failed; showing the static version', error)
+    loading.fail('scene-error')
+  }
+  render() {
+    return this.state.failed ? <StaticBackdrop /> : this.props.children
+  }
+}
+
+/** What the story sits on when there is no 3D: the same colours, still. */
+function StaticBackdrop() {
+  return (
+    <div
+      aria-hidden="true"
+      className="fixed inset-0 bg-[#020306] bg-[radial-gradient(60%_50%_at_70%_35%,rgb(127_227_255/0.16),transparent_70%),radial-gradient(50%_45%_at_25%_70%,rgb(255_154_213/0.12),transparent_70%),radial-gradient(40%_40%_at_55%_55%,rgb(185_166_255/0.12),transparent_70%)]"
+    />
+  )
+}
 const LiveTerminal = lazy(() => import('../components/landing/LiveTerminal').then((m) => ({ default: m.LiveTerminal })))
 const ease = [0.16, 1, 0.3, 1]
 const reveal = {
@@ -81,9 +114,15 @@ export default function Landing() {
 
   return (
     <div ref={root} data-theme="dark" className="relative min-h-dvh overflow-x-clip bg-[#020306] text-white">
-      <Suspense fallback={<div className="fixed inset-0 bg-[#020306]" />}>
-        <Stage />
-      </Suspense>
+      {webgl ? (
+        <SceneBoundary>
+          <Suspense fallback={<div className="fixed inset-0 bg-[#020306]" />}>
+            <Stage />
+          </Suspense>
+        </SceneBoundary>
+      ) : (
+        <StaticBackdrop />
+      )}
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-10 bg-[#05040c]"

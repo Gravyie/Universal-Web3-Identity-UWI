@@ -126,8 +126,8 @@ function Copy({ id, onPlay, onExplore }) {
             Proof of personhood · Hedera · N°000001
           </motion.p>
           {/* the base: headline left, action right */}
-          <div className="absolute inset-x-0 bottom-0 grid items-end gap-7 px-6 pb-24 sm:px-10 md:grid-cols-[1fr_minmax(0,22rem)] md:gap-10 lg:px-16 lg:pb-20">
-            <h1 className="text-[clamp(2.6rem,11vw,4rem)] leading-[0.9] font-semibold tracking-[-0.06em] text-white md:text-[clamp(3.4rem,6.6vw,7.4rem)]">
+          <div className="absolute inset-x-0 bottom-0 grid items-end gap-7 px-6 pb-24 sm:px-10 md:grid-cols-[1fr_minmax(0,22rem)] md:gap-10 lg:px-16 lg:pb-20 [@media(max-height:560px)]:gap-4 [@media(max-height:560px)]:pb-20">
+            <h1 className="text-[clamp(2.6rem,11vw,4rem)] leading-[0.9] font-semibold tracking-[-0.06em] text-white md:text-[clamp(3.4rem,6.6vw,7.4rem)] [@media(max-height:560px)]:text-[clamp(2rem,10vh,3rem)]">
               <Words text="Prove you're human" delay={0.15} />
               <br />
               <Words
@@ -137,7 +137,7 @@ function Copy({ id, onPlay, onExplore }) {
               />
             </h1>
             <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.7, ease }} className="md:pb-3">
-              <p className="text-[15px] leading-relaxed text-white/65">
+              <p className="text-[15px] leading-relaxed text-white/65 [@media(max-height:560px)]:hidden">
                 Then use it everywhere. One private credential tells any app you're a unique person, and nothing else about you.
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -155,7 +155,7 @@ function Copy({ id, onPlay, onExplore }) {
                   <Play weight="fill" className="size-3.5" /> Watch the story
                 </button>
               </div>
-              <HeroProof className="mt-6 hidden md:flex" />
+              <HeroProof className="mt-6 hidden md:flex [@media(max-height:560px)]:!hidden" />
             </motion.div>
           </div>
         </div>
@@ -259,7 +259,7 @@ export function Overlay({ chapters, revealed, faded }) {
         className="pointer-events-none fixed inset-0 z-30 bg-[radial-gradient(circle_at_50%_50%,#fff,#e8f4ff_30%,#ffd1ec_60%,#9b7bff_90%)] mix-blend-screen"
       />
 
-      <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between gap-4 px-5 sm:px-8">
+      <header className="fixed inset-x-0 top-0 z-50 flex h-[calc(4rem+env(safe-area-inset-top))] items-center justify-between gap-4 px-[max(1.25rem,env(safe-area-inset-left))] pt-[env(safe-area-inset-top)] sm:px-8">
         <Link to="/" onClick={() => goTo(0)} className="flex items-center gap-2.5 text-white" aria-label="UWI home">
           <LogoMark className="size-5" />
           <Wordmark />
@@ -335,7 +335,7 @@ export function Overlay({ chapters, revealed, faded }) {
 
       {/* controls */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-40 flex items-center justify-between px-5 pb-5 sm:px-8 ${faded ? 'pointer-events-none' : ''}`}
+        className={`fixed inset-x-0 bottom-0 z-40 flex items-center justify-between px-[max(1.25rem,env(safe-area-inset-left))] pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-8 ${faded ? 'pointer-events-none' : ''}`}
         style={fadeStyle}
       >
         <div className="flex items-center gap-2">

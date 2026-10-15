@@ -192,7 +192,7 @@ export function Fingerprint() {
         </div>
       </Html>
       <Html position={[0, -HEIGHT * 0.86, 0]} center zIndexRange={[16, 0]} style={{ pointerEvents: 'none' }}>
-        <div ref={label} data-state="forming" className="print-label group flex max-md:!hidden items-center gap-2 font-mono text-[11px] tracking-wide whitespace-nowrap text-white/55" style={{ opacity: 0 }}>
+        <div ref={label} data-state="forming" className="print-label group flex max-md:!hidden [@media(max-height:560px)]:!hidden items-center gap-2 font-mono text-[11px] tracking-wide whitespace-nowrap text-white/55" style={{ opacity: 0 }}>
           <span className="relative flex size-1.5">
             <span className="absolute inset-0 rounded-full bg-[#7fe3ff] group-data-[state=scanning]:animate-ping" />
             <span className="relative size-1.5 rounded-full bg-[#7fe3ff] group-data-[state=verified]:bg-emerald-400" />
