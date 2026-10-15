@@ -21,9 +21,12 @@ const SHOTS = [
 // Phones are too narrow for side-by-side framing; centre the subject and keep text below it.
 const MOBILE = {
   [P.hero]: { pos: [0, -0.6, 17.5], look: [0, -2.7, 0] },
+  // the hole sits in the upper half, clear of the copy at the bottom
+  [P.void]: { pos: [0, 1.0, 12.5], look: [0, -1.7, 0] },
+  [P.collapse]: { pos: [0, 1.5, 11.5], look: [0, -1.3, 0] },
   [NOVA]: { pos: [0, 0.9, 9.2], look: [0, -0.5, 0] },
   [P.dawn]: { pos: [0, 0.9, 8.6], look: [0, -0.5, 0] },
-  [P.cta]: { pos: [0, 1.4, 11.5], look: [0, -2.0, 0] },
+  [P.cta]: { pos: [0, 1.0, 12.5], look: [0, -3.1, 0] },
 }
 const shot = (s) => (xp.mobile && MOBILE[s.p] ? { ...s, ...MOBILE[s.p] } : s)
 

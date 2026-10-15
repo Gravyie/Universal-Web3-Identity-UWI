@@ -14,7 +14,6 @@ import { HoloCard } from '../components/holo/HoloCard'
 import { HERO_CARD } from '../experience/heroCard'
 import { LogoMark, Wordmark } from '../components/Logo'
 import { useLiveStats } from '../hooks/useLiveStats'
-import { Web3 } from '../web3/Web3'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { GATES_ADDRESS, REGISTRY_ADDRESS, explorer } from '../config/addresses'
 
@@ -314,9 +313,9 @@ function Developers() {
         </ul>
       </div>
       <motion.div {...reveal} className="min-w-0">
-        <Web3 fallback={<div className="h-80 rounded-[20px] bg-white/[0.03]" />}>
+        <Suspense fallback={<div className="h-80 rounded-[20px] bg-white/[0.03]" />}>
           <LiveTerminal />
-        </Web3>
+        </Suspense>
       </motion.div>
     </section>
   )

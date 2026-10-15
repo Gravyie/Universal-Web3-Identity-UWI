@@ -140,7 +140,11 @@ export function useChapters() {
       }, 220)
     }
 
+    // menus and dialogs scroll themselves; the story stays put underneath
+    const inDialog = (e) => Boolean(e.target?.closest?.('[role=dialog]'))
+
     const onWheel = (e) => {
+      if (inDialog(e)) return
       const now = performance.now()
       if (modeRef.current === 'page') {
         // The page scrolls natively. Scrolling up past its top lands back on the
@@ -162,6 +166,7 @@ export function useChapters() {
     let touchStart = 0
     let touchT = 0
     const onTouchStart = (e) => {
+      if (inDialog(e)) return
       touchY = touchStart = e.touches[0].clientY
       touchT = performance.now()
       locked = locked && !settled()

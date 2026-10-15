@@ -23,6 +23,9 @@ export const appKit = createAppKit({
     icons: [`${origin}/favicon.svg`],
   },
   features: { analytics: false, email: false, socials: false, swaps: false, onramp: false, send: false },
+  // The Coinbase SDK phones home to its own analytics on every page; Coinbase Wallet
+  // still connects as an injected or WalletConnect wallet.
+  enableCoinbase: false,
   themeVariables: {
     '--w3m-font-family': "'Geist Variable', ui-sans-serif, system-ui, sans-serif",
     '--w3m-border-radius-master': '3px',

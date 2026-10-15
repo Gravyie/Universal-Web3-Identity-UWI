@@ -106,14 +106,18 @@ export default function Stage() {
   }
   return (
     <Canvas
-      className="!fixed inset-0 overflow-hidden"
+      className="stage-canvas"
+      // only real size changes resize the canvas (each resize clears it for a frame)
+      resize={{ scroll: false, debounce: { scroll: 0, resize: 250 } }}
       dpr={dpr}
       camera={{ position: [0, 0.6, 18], fov: 34, near: 0.1, far: 140 }}
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping }}
       onCreated={watchContext}
     >
       <color attach="background" args={['#020306']} />
-      <PerformanceMonitor onDecline={() => setDpr((d) => Math.max(0.75, d - 0.25))} onIncline={() => setDpr((d) => Math.min(max, d + 0.25))} />
+      {/* Resolution only steps down, and gives up after a couple of changes: every change
+          reallocates the canvas, and flip-flopping on a phone shows up as black flashes. */}
+      <PerformanceMonitor flipflops={2} onDecline={() => setDpr((d) => Math.max(0.75, d - 0.25))} onFallback={() => setDpr(xp.mobile ? 0.9 : 1)} />
       <Suspense fallback={null}>
         <CameraRig />
         <Fingerprint />

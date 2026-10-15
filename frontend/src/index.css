@@ -171,3 +171,14 @@ body {
 
 /* Layer scale: header 40, sheets/dialogs 60, grain 70, toasts 80, wallet modal 90. */
 w3m-modal { z-index: 90; }
+
+/* The landing's WebGL canvas. Sized to the large viewport so mobile browser bars
+   showing and hiding never resize (and so never clear) it. */
+.stage-canvas {
+  position: fixed !important;
+  inset: 0 auto auto 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100lvh !important;
+  overflow: hidden;
+}

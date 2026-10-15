@@ -1,7 +1,8 @@
-import { useEffect, useRef, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
-import { ArrowDown, ArrowRight, Pause, Play, SpeakerHigh, SpeakerSlash } from '@phosphor-icons/react'
+import * as Dialog from '@radix-ui/react-dialog'
+import { ArrowDown, ArrowRight, List, Pause, Play, SpeakerHigh, SpeakerSlash, X } from '@phosphor-icons/react'
 import { CHAPTERS } from './chapters'
 import { novaTime } from './store'
 import { score } from './score'
@@ -61,6 +62,88 @@ function HudFrame() {
   )
 }
 
+/**
+ * The landing's menu on phones: a full-screen sheet with the main links and
+ * every chapter of the story, so any part is one tap away.
+ */
+function MobileMenu({ chapters }) {
+  const [open, setOpen] = useState(false)
+  const { index, mode, goTo, enterChapters } = chapters
+  const jump = (i) => {
+    setOpen(false)
+    if (mode === 'page') enterChapters()
+    goTo(i)
+  }
+  const links = [
+    ['Get verified', '/app/verify'],
+    ['Gates', '/app/gates'],
+    ['Developers', '/app/developers'],
+    ['Open the app', '/app'],
+  ]
+  return (
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Trigger
+        aria-label="Menu"
+        className="grid size-9 place-items-center rounded-full border border-white/15 bg-black/30 text-white backdrop-blur md:hidden"
+      >
+        <List className="size-[18px]" />
+      </Dialog.Trigger>
+      <AnimatePresence>
+        {open && (
+          <Dialog.Portal forceMount>
+            <Dialog.Content forceMount asChild aria-describedby={undefined}>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="fixed inset-0 z-[80] flex flex-col overflow-y-auto bg-[#020306]/95 px-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-white backdrop-blur-xl"
+              >
+                <Dialog.Title className="sr-only">Menu</Dialog.Title>
+                <div className="flex h-12 items-center justify-between">
+                  <span className="flex items-center gap-2.5">
+                    <LogoMark className="size-5" />
+                    <Wordmark />
+                  </span>
+                  <Dialog.Close aria-label="Close menu" className="grid size-9 place-items-center rounded-full border border-white/15 text-white">
+                    <X className="size-[18px]" />
+                  </Dialog.Close>
+                </div>
+                <nav aria-label="Main" className="mt-10 grid gap-1">
+                  {links.map(([label, to], i) => (
+                    <motion.div key={to} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 + i * 0.05, ease }}>
+                      <Link to={to} onClick={() => setOpen(false)} className="group flex items-center justify-between border-b border-white/10 py-4 text-[28px] font-semibold tracking-[-0.04em]">
+                        {label}
+                        <ArrowRight className="size-5 text-white/40 transition-transform group-active:translate-x-1" />
+                      </Link>
+                    </motion.div>
+                  ))}
+                </nav>
+                <p className="mt-10 font-mono text-[11px] tracking-[0.2em] text-white/40 uppercase">The story</p>
+                <ol className="mt-3 grid grid-cols-2 gap-x-4">
+                  {CHAPTERS.map((c, i) => (
+                    <li key={c.id}>
+                      <button
+                        type="button"
+                        onClick={() => jump(i)}
+                        aria-current={i === index && mode === 'chapters' ? 'step' : undefined}
+                        className="flex w-full items-baseline gap-2 py-2 text-left text-[15px] text-white/70 aria-[current=step]:text-white"
+                      >
+                        <span className="font-mono text-[11px] text-white/35">{String(i + 1).padStart(2, '0')}</span>
+                        {c.name}
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </motion.div>
+            </Dialog.Content>
+          </Dialog.Portal>
+        )}
+      </AnimatePresence>
+    </Dialog.Root>
+  )
+}
+
 /** The conclusion: the call to act, over the galaxy of people already counted. */
 function Finale({ onExplore }) {
   const { humans } = useLiveStats()
@@ -98,7 +181,7 @@ function Finale({ onExplore }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, delay: 1.1 }}
-        className="mt-10 flex flex-wrap gap-x-5 gap-y-2 font-mono text-[11px] tracking-[0.14em] text-white/40 uppercase"
+        className="mt-10 flex flex-wrap gap-x-5 gap-y-2 font-mono text-[11px] tracking-[0.14em] text-white/40 uppercase max-sm:hidden"
       >
         <li>Passport read by Self</li>
         <li>Zero-knowledge proof</li>
@@ -187,7 +270,7 @@ function Copy({ id, onPlay, onExplore }) {
       )
     case 'collapse':
       return (
-        <div className="absolute top-[22vh] left-6 max-w-md sm:left-10 lg:left-16">
+        <div className="absolute right-6 bottom-[14vh] left-6 max-w-md sm:left-10 md:top-[22vh] md:right-auto md:bottom-auto lg:left-16">
           <Sub delay={0.1} className="text-[clamp(1.25rem,2vw,1.75rem)] !leading-snug text-white">
             Self reads your passport's chip on your phone and compresses it into a zero-knowledge proof.
           </Sub>
@@ -275,9 +358,12 @@ export function Overlay({ chapters, revealed, faded }) {
             Developers
           </Link>
         </nav>
-        <Link to="/app" className="flex h-9 items-center rounded-full bg-white px-4 text-sm font-medium text-black">
-          Open app
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/app" className="flex h-9 items-center rounded-full bg-white px-4 text-sm font-medium text-black">
+            Open app
+          </Link>
+          <MobileMenu chapters={chapters} />
+        </div>
       </header>
 
       {/* a soft floor of shade so the story's text always reads over bright scenes */}

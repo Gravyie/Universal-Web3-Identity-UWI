@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useInView, useReducedMotion } from 'motion/react'
 import { ArrowClockwise } from '@phosphor-icons/react'
-import { useAccount } from 'wagmi'
-import { useCredential } from '../../hooks/useCredential'
 
 function colorJson(json) {
   return json.split(/("(?:[^"\\]|\\.)*"(?=\s*:)|"(?:[^"\\]|\\.)*"|\btrue\b|\bfalse\b|\bnull\b|-?\d+(?:\.\d+)?)/g).map((t, i) => {
@@ -17,15 +15,14 @@ function colorJson(json) {
 
 /**
  * A terminal that types a real request and prints the real response from
- * /api/v1/humans. Pick a sample, or it uses your own handle when connected.
+ * /api/v1/humans. Pick a sample. It needs no wallet, so the landing page never
+ * loads the wallet stack.
  */
 export function LiveTerminal() {
   const ref = useRef(null)
   const seen = useInView(ref, { once: true, margin: '-100px' })
   const reduce = useReducedMotion()
-  const { address } = useAccount()
-  const { credential } = useCredential(address)
-  const samples = [...new Set([credential?.username, 'ada_lovelace', 'nobody_here'].filter(Boolean))]
+  const samples = ['ada_lovelace', 'grace_hopper', 'nobody_here']
   const [target, setTarget] = useState('ada_lovelace')
   const [typed, setTyped] = useState('')
   const [res, setRes] = useState(null)
@@ -82,7 +79,6 @@ export function LiveTerminal() {
             className={`rounded-full px-2.5 py-1 font-mono text-[11px] transition-colors ${target === s ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'}`}
           >
             @{s}
-            {s === credential?.username ? ' (you)' : ''}
           </button>
         ))}
       </div>
