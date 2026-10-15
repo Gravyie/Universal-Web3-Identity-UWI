@@ -84,7 +84,14 @@ export default function Landing() {
       xp.pointer = { x: (e.clientX / window.innerWidth) * 2 - 1, y: (e.clientY / window.innerHeight) * 2 - 1 }
     }
     window.addEventListener('pointermove', onMove)
+    // The story owns every swipe. Without this, a downward drag at the top of the page is
+    // taken by the browser as pull-to-refresh (Chrome on Android) and reloads the landing.
+    const root = document.documentElement
+    root.style.overscrollBehaviorY = 'none'
+    document.body.style.overscrollBehaviorY = 'none'
     return () => {
+      root.style.overscrollBehaviorY = ''
+      document.body.style.overscrollBehaviorY = ''
       window.removeEventListener('pointermove', onMove)
       // the score belongs to the story: leaving the landing silences it
       score.stop()
