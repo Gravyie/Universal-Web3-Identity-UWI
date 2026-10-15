@@ -20,6 +20,9 @@ const Overview = lazy(() => import('./pages/app/Overview'))
 const Gates = lazy(() => import('./pages/app/Gates'))
 const GateDetail = lazy(() => import('./pages/app/GateDetail'))
 const Settings = lazy(() => import('./pages/app/Settings'))
+const LabCinematic = lazy(() => import('./pages/lab/Cinematic'))
+const LabEditorial = lazy(() => import('./pages/lab/Editorial'))
+const LabTactile = lazy(() => import('./pages/lab/Tactile'))
 
 function ScrollManager() {
   const { pathname, hash } = useLocation()
@@ -95,6 +98,10 @@ export default function App() {
           <Route path="id/:handle" element={<RedirectToProfile />} />
           <Route path="*" element={<NotFound />} />
         </Route>
+        {/* Design direction prototypes, compared side by side before the revamp. */}
+        <Route path="lab/cinematic" element={<Suspense fallback={<Fallback />}><LabCinematic /></Suspense>} />
+        <Route path="lab/editorial" element={<Suspense fallback={<Fallback />}><LabEditorial /></Suspense>} />
+        <Route path="lab/tactile" element={<Suspense fallback={<Fallback />}><LabTactile /></Suspense>} />
         <Route path="app" element={<AppShell />}>
           <Route element={<Page />}>
             <Route index element={<Overview />} />
