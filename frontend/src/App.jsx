@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { Toaster } from 'sonner'
+import { ReactLenis } from 'lenis/react'
 import { SiteHeader } from './components/layout/SiteHeader'
 import { Footer } from './components/layout/Footer'
 import { AppShell } from './components/layout/AppShell'
@@ -58,13 +59,13 @@ function Page() {
 
 function SiteLayout() {
   return (
-    <>
+    <ReactLenis root options={{ lerp: 0.12, smoothWheel: true }}>
       <SiteHeader />
       <main id="main" className="min-h-[70dvh]">
         <Page />
       </main>
       <Footer />
-    </>
+    </ReactLenis>
   )
 }
 

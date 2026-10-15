@@ -61,7 +61,7 @@ export function CommandMenu() {
                 className="h-13 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-muted"
               />
             </div>
-            <Command.List className="max-h-[50vh] overflow-y-auto p-2">
+            <Command.List data-lenis-prevent className="max-h-[50vh] overflow-y-auto p-2">
               <Command.Empty className="px-3 py-8 text-center text-sm text-muted">No matches.</Command.Empty>
 
               {(looksLikeAddress || looksLikeName) && (
