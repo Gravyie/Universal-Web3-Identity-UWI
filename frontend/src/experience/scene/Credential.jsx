@@ -4,11 +4,10 @@ import { MeshTransmissionMaterial, RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
 import { xp } from '../store'
 import { NOVA, P, seg, smooth } from '../chapters'
-import { GROUND } from './Landscape'
 
 const W = 3.4
 const H = 2.14
-export const CARD_Y = 0.35
+export const CARD_Y = 0.1
 
 function useFace() {
   const [tex, setTex] = useState(null)
@@ -66,7 +65,6 @@ export function Credential() {
   const group = useRef()
   const face = useRef()
   const beam = useRef()
-  const pillar = useRef()
   const tex = useFace()
   const glass = useMemo(() => (xp.mobile ? { samples: 3, resolution: 256 } : { samples: 6, resolution: 768 }), [])
 
@@ -75,24 +73,20 @@ export function Credential() {
     const t = state.clock.elapsedTime
     const g = group.current
     if (!g) return
-    const rise = smooth(seg(p, NOVA + 0.02, P.card - 0.015))
-    g.visible = rise > 0.001
-    g.position.y = THREE.MathUtils.lerp(GROUND - 2.4, CARD_Y, rise) + (xp.reduced ? 0 : Math.sin(t * 0.7) * 0.05 * rise)
-    g.scale.setScalar(0.6 + 0.4 * rise)
+    // born in the supernova: spins out of the core and settles
+    const born = smooth(seg(p, NOVA, P.dawn + 0.02))
+    g.visible = born > 0.001
+    g.position.y = CARD_Y + (xp.reduced ? 0 : Math.sin(t * 0.7) * 0.05 * born)
+    g.scale.setScalar(Math.max(0.0001, born))
+    const spin = (1 - born) * Math.PI * 3
 
     if (!xp.reduced) {
-      g.rotation.y = THREE.MathUtils.damp(g.rotation.y, xp.pointer.x * 0.28 + Math.sin(t * 0.35) * 0.06, 3, dt)
+      g.rotation.y = THREE.MathUtils.damp(g.rotation.y, spin + xp.pointer.x * 0.28 + Math.sin(t * 0.35) * 0.06, born < 1 ? 20 : 3, dt)
       g.rotation.x = THREE.MathUtils.damp(g.rotation.x, -xp.pointer.y * 0.16, 3, dt)
-    }
-
-    // light pillar while surfacing
-    const pil = Math.sin(Math.PI * seg(p, NOVA + 0.02, P.dawn + 0.05))
-    pillar.current.visible = pil > 0.01
-    pillar.current.material.opacity = pil * 0.45
-    pillar.current.scale.set(1 + pil * 0.4, 1, 1 + pil * 0.4)
+    } else g.rotation.y = spin
 
     // scan prints the face from the top down
-    const scan = seg(p, P.dawn + 0.015, P.card - 0.005)
+    const scan = seg(p, NOVA + 0.03, P.dawn + 0.03)
     beam.current.visible = scan > 0 && scan < 1
     beam.current.position.y = H / 2 - scan * H
     beam.current.children.forEach((m) => (m.material.opacity = Math.sin(scan * Math.PI)))
@@ -108,10 +102,6 @@ export function Credential() {
 
   return (
     <>
-      <mesh ref={pillar} position={[0, GROUND + 6, 0]} visible={false}>
-        <cylinderGeometry args={[0.12, 0.75, 18, 48, 1, true]} />
-        <meshBasicMaterial color={[0.5, 1.4, 1.9]} toneMapped={false} transparent depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
-      </mesh>
       <group ref={group} visible={false}>
         {tex && (
           <mesh ref={face} position={[0, 0, 0.02]}>

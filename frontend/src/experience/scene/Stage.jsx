@@ -9,7 +9,7 @@ import { CameraRig } from './CameraRig'
 import { Swarm } from './Swarm'
 import { BlackHole } from './BlackHole'
 import { Supernova } from './Supernova'
-import { Landscape } from './Landscape'
+import { Nebula } from './Nebula'
 import { Credential } from './Credential'
 import { Portals } from './Portals'
 
@@ -17,7 +17,7 @@ import { Portals } from './Portals'
 function Space() {
   const ref = useRef()
   useFrame(() => {
-    ref.current.visible = xp.progress < NOVA + 0.02
+    ref.current.visible = xp.progress < NOVA + 0.01
   })
   return (
     <group ref={ref}>
@@ -49,7 +49,7 @@ export default function Stage({ frameloop = 'always' }) {
         <CameraRig />
         <Space />
         <Supernova />
-        <Landscape />
+        <Nebula />
         <Credential />
         <Portals />
         <EffectComposer multisampling={0} disableNormalPass>

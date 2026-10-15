@@ -13,9 +13,9 @@ const SHOTS = [
   { p: P.void, pos: [0, 1.5, 12.5], look: [0, 0, 0], fov: 32 },
   { p: P.collapse, pos: [3.6, 1.4, 11.5], look: [-0.6, 0, 0], fov: 32 },
   { p: NOVA, pos: [0, 0.4, 9], look: [0, 0, 0], fov: 36 },
-  { p: P.dawn, pos: [0, 0.1, 14], look: [0, 1.2, -20], fov: 46 },
-  { p: P.card, pos: [1.1, 0.55, 7.4], look: [1.5, 0.35, 0], fov: 34 },
-  { p: P.everywhere, pos: [0, 2.4, 11.5], look: [0, 1.15, -1], fov: 44 },
+  { p: P.dawn, pos: [0, 0.4, 9.5], look: [0, 0.1, -2], fov: 44 },
+  { p: P.card, pos: [1.1, 0.4, 7.2], look: [1.5, 0.1, 0], fov: 34 },
+  { p: P.everywhere, pos: [0, 1.6, 11], look: [0, 0.9, -1], fov: 44 },
   { p: P.cta, pos: [-0.6, 1.1, 9.8], look: [-3.1, 1.0, 0], fov: 38 },
 ]
 

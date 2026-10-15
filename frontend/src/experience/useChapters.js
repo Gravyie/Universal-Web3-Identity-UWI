@@ -3,7 +3,8 @@ import { CHAPTERS, NOVA } from './chapters'
 import { xp } from './store'
 import { score } from './score'
 
-const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2
+// fast start, long soft landing: responds instantly, settles smoothly
+const easeInOutSine = (t) => 1 - Math.pow(1 - t, 3)
 const LAST = CHAPTERS.length - 1
 
 /**
@@ -29,7 +30,7 @@ export function useChapters() {
     const from = idx.current
     if (i === from) return
     const forward = i > from
-    const dur = (xp.reduced ? 0.01 : (CHAPTERS[forward ? i : from].duration ?? 1.45) * (Math.abs(i - from) > 1 ? 1.25 : 1)) * 1000
+    const dur = (xp.reduced ? 0.01 : (CHAPTERS[forward ? i : from].duration ?? 0.95) * (Math.abs(i - from) > 1 ? 1.2 : 1)) * 1000
     const p0 = xp.progress
     const p1 = CHAPTERS[i].p
     cancelAnimationFrame(raf.current)
@@ -72,8 +73,9 @@ export function useChapters() {
 
   const step = useCallback(
     (dir) => {
-      if (animating.current) return
-      if (dir > 0 && idx.current === LAST) enterPage()
+      // never block: a new gesture retargets from wherever the camera is
+      if (dir > 0 && idx.current === LAST && !animating.current) enterPage()
+      else if (dir > 0 && idx.current === LAST) return
       else goTo(idx.current + dir)
     },
     [goTo, enterPage],
@@ -98,7 +100,7 @@ export function useChapters() {
       // One gesture, one step: stay locked until the wheel has been quiet for
       // a moment, which swallows trackpad momentum.
       clearTimeout(unlockTimer.current)
-      unlockTimer.current = setTimeout(() => (gestureLock.current = false), 180)
+      unlockTimer.current = setTimeout(() => (gestureLock.current = false), 90)
       if (gestureLock.current || Math.abs(e.deltaY) < 8) return
       gestureLock.current = true
       setPlaying(false)

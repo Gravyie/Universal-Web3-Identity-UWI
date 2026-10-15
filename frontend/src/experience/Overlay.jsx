@@ -109,16 +109,16 @@ function Copy({ id, onPlay, onExplore }) {
       return (
         <div className="absolute bottom-[13vh] left-6 max-w-xl sm:left-10 lg:left-16">
           <h2 className={H}>
-            <Words text="What's left is" />
+            <Words text="From the collapse," />
             <br />
-            <Words text="just the truth." delay={0.15} className="text-[#ffd6a0]" />
+            <Words text="one true thing." delay={0.15} className="text-[#ff9ad5]" />
           </h2>
           <Sub className="mt-4 max-w-md">Your documents never leave your hand. Only the proof does.</Sub>
         </div>
       )
     case 'card':
       return (
-        <div className="absolute right-6 bottom-[13vh] left-6 max-w-md md:top-1/2 md:bottom-auto md:left-auto md:-translate-y-1/2 md:text-right lg:right-28">
+        <div className="absolute right-6 bottom-[13vh] left-6 max-w-md md:top-1/2 md:bottom-auto md:left-auto md:-translate-y-1/2 md:text-right lg:right-40">
           <h2 className="text-[clamp(2rem,4.2vw,3.75rem)] leading-[1.02] font-semibold tracking-[-0.05em] text-white">
             <Words text="One human." />
             <br />
