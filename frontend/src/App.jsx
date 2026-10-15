@@ -2,15 +2,12 @@ import { lazy, Suspense, useEffect } from 'react'
 import { Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { Toaster } from 'sonner'
-import { ReactLenis } from 'lenis/react'
-import { SiteHeader } from './components/layout/SiteHeader'
-import { Footer } from './components/layout/Footer'
-import { AppShell } from './components/layout/AppShell'
+import { AppShell, RequireWallet } from './components/layout/AppShell'
 import { CommandMenu } from './components/layout/CommandMenu'
 import { Spinner } from './components/ui/Spinner'
 import { useTheme } from './theme/ThemeProvider'
 
-const Film = lazy(() => import('./pages/Film'))
+const Landing = lazy(() => import('./pages/Landing'))
 const Onboard = lazy(() => import('./pages/onboard/Onboard'))
 const Profile = lazy(() => import('./pages/Profile'))
 const GateJoin = lazy(() => import('./pages/GateJoin'))
@@ -21,15 +18,11 @@ const Gates = lazy(() => import('./pages/app/Gates'))
 const GateDetail = lazy(() => import('./pages/app/GateDetail'))
 const Settings = lazy(() => import('./pages/app/Settings'))
 
-
 function ScrollManager() {
   const { pathname, hash } = useLocation()
   useEffect(() => {
-    if (hash) {
-      requestAnimationFrame(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' }))
-    } else {
-      window.scrollTo(0, 0)
-    }
+    if (hash) requestAnimationFrame(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' }))
+    else window.scrollTo(0, 0)
   }, [pathname, hash])
   return null
 }
@@ -45,12 +38,7 @@ function Fallback() {
 function Page() {
   const { pathname } = useLocation()
   return (
-    <motion.div
-      key={pathname}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-    >
+    <motion.div key={pathname} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}>
       <Suspense fallback={<Fallback />}>
         <Outlet />
       </Suspense>
@@ -58,60 +46,54 @@ function Page() {
   )
 }
 
-function SiteLayout() {
-  return (
-    <ReactLenis root options={{ lerp: 0.12, smoothWheel: true }}>
-      <SiteHeader />
-      <main id="main" className="min-h-[70dvh]">
-        <Page />
-      </main>
-      <Footer />
-    </ReactLenis>
-  )
-}
-
-function RedirectToProfile() {
-  const { handle } = useParams()
-  return <Navigate to={`/u/${handle}`} replace />
+const Param = ({ to }) => {
+  const params = useParams()
+  return <Navigate to={to(params)} replace />
 }
 
 export default function App() {
   const { resolved } = useTheme()
   return (
-    <div className="grain">
+    <>
       <a href="#main" className="sr-only rounded-full bg-ink px-4 py-2 text-bg focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-80">
         Skip to content
       </a>
       <ScrollManager />
       <CommandMenu />
       <Routes>
-        <Route element={<SiteLayout />}>
-          <Route path="start" element={<Onboard />} />
-          <Route path="u/:handle" element={<Profile />} />
-          <Route path="g/:id" element={<GateJoin />} />
-          <Route path="developers" element={<Developers />} />
-          <Route path="create" element={<Navigate to="/start" replace />} />
-          <Route path="verify" element={<Navigate to="/developers#lookup" replace />} />
-          <Route path="id/:handle" element={<RedirectToProfile />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-        {/* The landing page is a film with its own chrome, outside the site layout. */}
+        {/* The landing experience has its own chrome. */}
         <Route
           index
           element={
             <Suspense fallback={<div className="min-h-dvh bg-[#020306]" />}>
-              <Film />
+              <Landing />
             </Suspense>
           }
         />
-        <Route path="app" element={<AppShell />}>
+
+        {/* Everything else lives in one app shell, so it all looks and works the same. */}
+        <Route element={<AppShell />}>
           <Route element={<Page />}>
-            <Route index element={<Overview />} />
-            <Route path="gates" element={<Gates />} />
-            <Route path="gates/:id" element={<GateDetail />} />
-            <Route path="settings" element={<Settings />} />
+            <Route path="app/verify" element={<Onboard />} />
+            <Route path="app/developers" element={<Developers />} />
+            <Route path="u/:handle" element={<Profile />} />
+            <Route path="g/:id" element={<GateJoin />} />
+            <Route element={<RequireWallet />}>
+              <Route path="app" element={<Overview />} />
+              <Route path="app/gates" element={<Gates />} />
+              <Route path="app/gates/:id" element={<GateDetail />} />
+              <Route path="app/settings" element={<Settings />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Route>
+
+        {/* Old links */}
+        <Route path="start" element={<Navigate to="/app/verify" replace />} />
+        <Route path="create" element={<Navigate to="/app/verify" replace />} />
+        <Route path="developers" element={<Navigate to="/app/developers" replace />} />
+        <Route path="verify" element={<Navigate to="/app/developers#lookup" replace />} />
+        <Route path="id/:handle" element={<Param to={(p) => `/u/${p.handle}`} />} />
       </Routes>
       <Toaster
         theme={resolved}
@@ -119,11 +101,11 @@ export default function App() {
         offset={88}
         toastOptions={{
           classNames: {
-            toast: '!rounded-[20px] !border-line-strong !bg-bg-elev !text-ink !shadow-card',
+            toast: '!rounded-[16px] !border-line-strong !bg-bg-elev !text-ink !shadow-card',
             description: '!text-ink-2',
           },
         }}
       />
-    </div>
+    </>
   )
 }

@@ -10,7 +10,7 @@ import { CodeSnippets } from '../components/CodeSnippets'
 import { SystemPipeline } from '../components/Diagrams'
 import { GATES_ADDRESS, REGISTRY_ADDRESS, explorer, uwiChain } from '../config/chain'
 import { api } from '../lib/api'
-import { easeOutExpo } from '../lib/motion'
+import { PageContainer, PageHeader } from '../components/layout/Page'
 
 const NAV = [
   ['lookup', 'Lookup'],
@@ -36,7 +36,7 @@ const FUNCTIONS = [
 
 function H2({ id, children }) {
   return (
-    <h2 id={id} className="scroll-mt-24 text-2xl font-semibold tracking-[-0.035em] text-ink">
+    <h2 id={id} className="scroll-mt-32 text-xl font-semibold tracking-[-0.035em] text-ink">
       {children}
     </h2>
   )
@@ -44,26 +44,18 @@ function H2({ id, children }) {
 
 export default function Developers() {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-16 lg:grid lg:grid-cols-[200px_1fr] lg:gap-16">
-      <aside className="hidden lg:block">
-        <nav className="sticky top-24 grid gap-1 text-sm" aria-label="On this page">
-          {NAV.map(([id, label]) => (
-            <a key={id} href={`#${id}`} className="rounded-full px-3 py-1.5 text-ink-2 hover:bg-surface-2 hover:text-ink">
-              {label}
-            </a>
-          ))}
-        </nav>
-      </aside>
+    <PageContainer>
+      <PageHeader title="Developers" description="Ask whether a wallet is a unique human from a contract, a backend or a browser. No API keys, no personal data to store." />
+      <nav aria-label="On this page" className="sticky top-16 z-20 -mx-4 mb-10 flex gap-1 overflow-x-auto border-b border-line bg-bg/80 px-4 py-2 backdrop-blur-xl sm:-mx-6 sm:px-6">
+        {NAV.map(([id, label]) => (
+          <a key={id} href={`#${id}`} className="shrink-0 rounded-full px-3 py-1.5 text-sm text-ink-2 hover:bg-surface-2 hover:text-ink">
+            {label}
+          </a>
+        ))}
+      </nav>
 
       <div className="min-w-0">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: easeOutExpo }}>
-          <h1 className="text-[clamp(2.2rem,4.5vw,3.25rem)] leading-[1.05] font-semibold tracking-[-0.045em] text-ink">Build on UWI</h1>
-          <p className="mt-4 max-w-2xl text-lg text-ink-2">
-            Ask whether a wallet is a unique human from a contract, a backend or a browser. No API keys, no personal data to store.
-          </p>
-        </motion.div>
-
-        <section className="mt-14">
+        <section>
           <H2 id="lookup">Lookup</H2>
           <p className="mt-2 text-ink-2">Try the API against live testnet data.</p>
           <Lookup />
@@ -141,7 +133,7 @@ export default function Developers() {
           </div>
         </section>
       </div>
-    </div>
+    </PageContainer>
   )
 }
 

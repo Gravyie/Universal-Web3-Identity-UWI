@@ -14,6 +14,7 @@ import { useCardActions } from '../../hooks/useCardActions'
 import { formatNumber } from '../../lib/format'
 import { readJSON, writeJSON } from '../../lib/storage'
 import { easeOutExpo } from '../../lib/motion'
+import { PageContainer, PageHeader } from '../../components/layout/Page'
 
 export default function Overview() {
   const { address } = useAccount()
@@ -25,18 +26,6 @@ export default function Overview() {
     return <EmptyState title="Couldn't reach Hedera" body="The network didn't respond. Refresh to try again." />
   }
   return <Verified credential={credential} address={address} />
-}
-
-function PageHeader({ title, body, actions }) {
-  return (
-    <div className="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-[-0.035em] text-ink sm:text-3xl">{title}</h1>
-        {body && <p className="mt-1.5 text-ink-2">{body}</p>}
-      </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
-    </div>
-  )
 }
 
 function Verified({ credential, address }) {
@@ -52,10 +41,10 @@ function Verified({ credential, address }) {
   const recent = [...created.map((g) => ({ ...g, mine: true })), ...joined].slice(0, 4)
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+    <PageContainer>
       <PageHeader
         title={`Hi, @${credential.username}`}
-        body="Your credential, and the gates you run and belong to."
+        description="Your credential, and the gates you run and belong to."
         actions={
           <Button to="/app/gates?new=1" size="sm">
             <Plus className="size-4" /> New gate
@@ -63,7 +52,7 @@ function Verified({ credential, address }) {
         }
       />
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: easeOutExpo }}>
           <HoloCard
             ref={cardRef}
@@ -139,34 +128,37 @@ function Verified({ credential, address }) {
           </div>
         )}
       </div>
-    </div>
+    </PageContainer>
   )
 }
 
 function NotVerified() {
   return (
-    <div className="mx-auto grid max-w-5xl items-center gap-12 px-4 py-14 sm:px-6 md:grid-cols-2 md:py-20">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-[-0.04em] text-ink">You're not verified yet</h1>
-        <p className="mt-3 text-ink-2">Get your credential to join gates, create your own and be recognised by every app that checks UWI.</p>
-        <Button to="/start" size="lg" className="mt-8">
-          Get verified <ArrowRight className="size-4" />
-        </Button>
+    <PageContainer>
+      <PageHeader title="Overview" description="Get your credential to join gates, create your own and be recognised by every app that checks UWI." />
+      <div className="grid items-center gap-10 rounded-[20px] border border-line bg-surface p-6 sm:p-10 md:grid-cols-[1fr_1.1fr]">
+        <div>
+          <h2 className="text-xl font-semibold tracking-[-0.03em] text-ink">You're not verified yet</h2>
+          <p className="mt-2 text-ink-2">Connect, pick a username and prove you're one person. About two minutes.</p>
+          <Button to="/app/verify" size="lg" className="mt-6">
+            Get verified <ArrowRight className="size-4" />
+          </Button>
+        </div>
+        <HoloCard proof="pending" className="mx-auto w-full max-w-sm" />
       </div>
-      <HoloCard proof="pending" className="mx-auto w-full max-w-sm" />
-    </div>
+    </PageContainer>
   )
 }
 
 function OverviewSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10" aria-busy="true">
-      <Skeleton className="h-8 w-56" />
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_1fr]">
+    <PageContainer>
+      <Skeleton className="mb-8 h-9 w-56" />
+      <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
         <Skeleton className="aspect-[1.586] rounded-[20px]" />
         <Skeleton className="h-72 rounded-[20px]" />
       </div>
-    </div>
+    </PageContainer>
   )
 }
 
@@ -202,7 +194,7 @@ function SetupChecklist({ credential, created, joined, shared, onShare, humans }
   if (doneCount === items.length) return null
 
   return (
-    <section className="mt-12 rounded-[20px] border border-line bg-surface">
+    <section className="mt-6 rounded-[20px] border border-line bg-surface">
       <div className="flex items-center justify-between gap-4 p-5">
         <div>
           <h2 className="font-medium text-ink">Get set up</h2>

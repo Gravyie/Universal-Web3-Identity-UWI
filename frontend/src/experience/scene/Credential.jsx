@@ -2,13 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { MeshTransmissionMaterial, RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
-import { film } from '../store'
-import { seg, smooth } from '../timeline'
+import { xp } from '../store'
+import { NOVA, P, seg, smooth } from '../chapters'
+import { GROUND } from './Landscape'
 
 const W = 3.4
 const H = 2.14
+export const CARD_Y = 0.35
 
-/** The card face, painted into a canvas once fonts are ready. */
 function useFace() {
   const [tex, setTex] = useState(null)
   useEffect(() => {
@@ -22,25 +23,16 @@ function useFace() {
       c.height = ch
       const g = c.getContext('2d')
       const bg = g.createLinearGradient(0, 0, cw, ch)
-      bg.addColorStop(0, '#071528')
-      bg.addColorStop(0.55, '#0c2240')
-      bg.addColorStop(1, '#050c16')
+      bg.addColorStop(0, '#0b1730')
+      bg.addColorStop(0.55, '#162a4d')
+      bg.addColorStop(1, '#0a1120')
       g.fillStyle = bg
       g.fillRect(0, 0, cw, ch)
-      // concentric security print
       g.strokeStyle = 'rgba(127,227,255,0.13)'
       g.lineWidth = 1.4
       for (let r = 30; r < 700; r += 13) {
         g.beginPath()
         g.arc(cw * 0.8, ch * 0.48, r, 0, Math.PI * 2)
-        g.stroke()
-      }
-      // fine diagonal hatching
-      g.strokeStyle = 'rgba(127,227,255,0.05)'
-      for (let x = -ch; x < cw; x += 9) {
-        g.beginPath()
-        g.moveTo(x, 0)
-        g.lineTo(x + ch, ch)
         g.stroke()
       }
       const text = (s, x, y, font, color) => {
@@ -52,7 +44,7 @@ function useFace() {
       text('PROOF OF PERSONHOOD', 95, 196, '500 24px "Geist Mono Variable", monospace', 'rgba(127,227,255,0.75)')
       text('@you', 92, 610, '600 120px "Geist Variable", sans-serif', '#ffffff')
       text('●  Verified human', 96, 680, '500 34px "Geist Variable", sans-serif', '#7fe3ff')
-      text('NO. 000001        HEDERA 296        SOULBOUND        ZK', 96, 790, '400 26px "Geist Mono Variable", monospace', 'rgba(255,255,255,0.45)')
+      text('NO. 000001        HEDERA        SOULBOUND        ZK PROOF', 96, 790, '400 26px "Geist Mono Variable", monospace', 'rgba(255,255,255,0.45)')
       const t = new THREE.CanvasTexture(c)
       t.colorSpace = THREE.SRGBColorSpace
       t.anisotropy = 8
@@ -65,63 +57,45 @@ function useFace() {
   return tex
 }
 
+/**
+ * The credential rises out of the lake on a pillar of light. A scan line
+ * prints its face as it surfaces; then it hangs over the water, turning
+ * gently toward the pointer.
+ */
 export function Credential() {
   const group = useRef()
   const face = useRef()
   const beam = useRef()
-  const core = useRef()
+  const pillar = useRef()
   const tex = useFace()
-  // soft vertical falloff for the scan glow, fading toward the top
-  const glow = useMemo(() => {
-    const c = document.createElement('canvas')
-    c.width = 4
-    c.height = 128
-    const g = c.getContext('2d')
-    const grad = g.createLinearGradient(0, 128, 0, 0)
-    grad.addColorStop(0, 'rgba(255,255,255,1)')
-    grad.addColorStop(1, 'rgba(255,255,255,0)')
-    g.fillStyle = grad
-    g.fillRect(0, 0, 4, 128)
-    return new THREE.CanvasTexture(c)
-  }, [])
-  const glassProps = useMemo(
-    () =>
-      film.mobile
-        ? { samples: 3, resolution: 256 }
-        : { samples: 6, resolution: 768 },
-    [],
-  )
+  const glass = useMemo(() => (xp.mobile ? { samples: 3, resolution: 256 } : { samples: 6, resolution: 768 }), [])
 
   useFrame((state, dt) => {
-    const p = film.progress
+    const p = xp.progress
     const t = state.clock.elapsedTime
     const g = group.current
     if (!g) return
+    const rise = smooth(seg(p, NOVA + 0.02, P.card - 0.015))
+    g.visible = rise > 0.001
+    g.position.y = THREE.MathUtils.lerp(GROUND - 2.4, CARD_Y, rise) + (xp.reduced ? 0 : Math.sin(t * 0.7) * 0.05 * rise)
+    g.scale.setScalar(0.6 + 0.4 * rise)
 
-    // A point of light gathers the swarm, then the card unfolds out of it.
-    const gather = smooth(seg(p, 0.36, 0.43)) * (1 - smooth(seg(p, 0.43, 0.46)))
-    core.current.scale.setScalar(0.05 + gather * 0.55)
-    core.current.material.opacity = gather
-
-    const form = smooth(seg(p, 0.43, 0.5))
-    g.scale.setScalar(Math.max(0.0001, form))
-    g.visible = form > 0.001
-
-    // Idle life plus a slow pointer lean; reduced motion keeps it still.
-    if (!film.reduced) {
-      g.rotation.y = THREE.MathUtils.damp(g.rotation.y, film.pointer.x * 0.25 + Math.sin(t * 0.4) * 0.06, 3, dt)
-      g.rotation.x = THREE.MathUtils.damp(g.rotation.x, -film.pointer.y * 0.18 + Math.cos(t * 0.33) * 0.04, 3, dt)
-      g.position.y = Math.sin(t * 0.7) * 0.05
+    if (!xp.reduced) {
+      g.rotation.y = THREE.MathUtils.damp(g.rotation.y, xp.pointer.x * 0.28 + Math.sin(t * 0.35) * 0.06, 3, dt)
+      g.rotation.x = THREE.MathUtils.damp(g.rotation.x, -xp.pointer.y * 0.16, 3, dt)
     }
 
-    // The scan: a light plane sweeps top to bottom and prints the face as it passes.
-    const scan = seg(p, 0.46, 0.53)
+    // light pillar while surfacing
+    const pil = Math.sin(Math.PI * seg(p, NOVA + 0.02, P.dawn + 0.05))
+    pillar.current.visible = pil > 0.01
+    pillar.current.material.opacity = pil * 0.45
+    pillar.current.scale.set(1 + pil * 0.4, 1, 1 + pil * 0.4)
+
+    // scan prints the face from the top down
+    const scan = seg(p, P.dawn + 0.015, P.card - 0.005)
     beam.current.visible = scan > 0 && scan < 1
     beam.current.position.y = H / 2 - scan * H
-    const glowOn = Math.sin(scan * Math.PI)
-    beam.current.children.forEach((m) => (m.material.opacity = glowOn))
-    // Wipe the face in from the top, exactly behind the beam: shrink the plane
-    // to the scanned height and crop the texture to match, so nothing ghosts.
+    beam.current.children.forEach((m) => (m.material.opacity = Math.sin(scan * Math.PI)))
     if (face.current) {
       const s = Math.max(0.0001, scan)
       const map = face.current.material.map
@@ -134,11 +108,11 @@ export function Credential() {
 
   return (
     <>
-      <mesh ref={core}>
-        <sphereGeometry args={[1, 32, 32]} />
-        <meshBasicMaterial color={[4, 6, 7]} toneMapped={false} transparent opacity={0} />
+      <mesh ref={pillar} position={[0, GROUND + 6, 0]} visible={false}>
+        <cylinderGeometry args={[0.12, 0.75, 18, 48, 1, true]} />
+        <meshBasicMaterial color={[0.5, 1.4, 1.9]} toneMapped={false} transparent depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
       </mesh>
-      <group ref={group}>
+      <group ref={group} visible={false}>
         {tex && (
           <mesh ref={face} position={[0, 0, 0.02]}>
             <planeGeometry args={[W, H]} />
@@ -150,15 +124,11 @@ export function Credential() {
             <planeGeometry args={[W + 0.5, 0.012]} />
             <meshBasicMaterial color={[4, 8, 10]} toneMapped={false} transparent />
           </mesh>
-          <mesh position={[0, 0.08, -0.001]}>
-            <planeGeometry args={[W + 0.2, 0.16]} />
-            <meshBasicMaterial map={glow} color={[0.25, 0.8, 1.1]} toneMapped={false} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
-          </mesh>
         </group>
         <RoundedBox args={[W + 0.18, H + 0.18, 0.16]} radius={0.14} smoothness={8} position={[0, 0, -0.1]}>
           <MeshTransmissionMaterial
             backside
-            {...glassProps}
+            {...glass}
             thickness={0.35}
             roughness={0}
             ior={1.25}
@@ -167,8 +137,8 @@ export function Credential() {
             distortion={0.06}
             distortionScale={0.3}
             temporalDistortion={0.04}
-            color="#dff1ff"
-            attenuationColor="#9fdcff"
+            color="#e6f2ff"
+            attenuationColor="#ffd2b0"
             attenuationDistance={2}
           />
         </RoundedBox>

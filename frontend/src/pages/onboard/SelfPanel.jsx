@@ -7,7 +7,7 @@ import { useIsMobile } from '../../hooks/useMediaQuery'
 
 /**
  * Desktop: Self's websocket QR, which tells this page when the proof landed.
- * Mobile: a universal link into the Self app with a callback back to /start.
+ * Mobile: a universal link into the Self app with a callback back to /app/verify.
  * Either way the proof goes to api/self.js, which issues the credential.
  */
 export default function SelfPanel({ address, username, onSubmitted, onLaunch }) {
@@ -29,7 +29,7 @@ export default function SelfPanel({ address, username, onSubmitted, onLaunch }) 
         userIdType: 'hex',
         userDefinedData: `uwi:${username}`,
         disclosures: selfConfig.disclosures,
-        deeplinkCallback: `${window.location.origin}/start?self=done`,
+        deeplinkCallback: `${window.location.origin}/app/verify?self=done`,
       }).build()
       return { app, buildError: null }
     } catch (e) {

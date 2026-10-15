@@ -14,6 +14,7 @@ import { useCredential, useServiceStatus } from '../../hooks/useCredential'
 import { useGasless } from '../../hooks/useGasless'
 import { GATES_ADDRESS, REGISTRY_ADDRESS, explorer, uwiChain } from '../../config/chain'
 import { shortAddress } from '../../lib/format'
+import { PageContainer, PageHeader } from '../../components/layout/Page'
 
 function Section({ title, body, children }) {
   return (
@@ -34,10 +35,10 @@ export default function Settings() {
   const { data: service } = useServiceStatus()
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-      <h1 className="text-2xl font-semibold tracking-[-0.035em] text-ink sm:text-3xl">Settings</h1>
+    <PageContainer>
+      <PageHeader title="Settings" description="Appearance, your card, the network and your credential." />
 
-      <div className="mt-10">
+      <div className="rounded-[20px] border border-line bg-surface px-6 py-8 sm:px-8">
         <Section title="Appearance" body="Saved on this device.">
           <div className="grid gap-6">
             <div>
@@ -143,7 +144,7 @@ export default function Settings() {
           </>
         )}
       </div>
-    </div>
+    </PageContainer>
   )
 }
 

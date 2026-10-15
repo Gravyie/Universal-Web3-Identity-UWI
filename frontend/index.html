@@ -14,13 +14,13 @@
       // Apply the saved theme before first paint so there is no flash.
       try {
         var s = JSON.parse(localStorage.getItem('uwi:theme') || '{}')
-        var mode = s.mode || 'system'
+        var mode = s.mode || 'dark'
         var dark = mode === 'dark' || (mode === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
         document.documentElement.dataset.theme = dark ? 'dark' : 'light'
-        document.documentElement.dataset.accent = s.accent || 'cobalt'
+        document.documentElement.dataset.accent = s.accent || 'aurora'
       } catch (e) {
         document.documentElement.dataset.theme = 'dark'
-        document.documentElement.dataset.accent = 'cobalt'
+        document.documentElement.dataset.accent = 'aurora'
       }
     </script>
   </head>

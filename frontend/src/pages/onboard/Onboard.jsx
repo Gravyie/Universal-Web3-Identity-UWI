@@ -24,6 +24,7 @@ import { Button } from '../../components/ui/Button'
 import { Field, Input } from '../../components/ui/Field'
 import { Spinner } from '../../components/ui/Spinner'
 import { HoloCard } from '../../components/holo/HoloCard'
+import { PageContainer, PageHeader } from '../../components/layout/Page'
 import { useCredential, useServiceStatus, useUsernameAvailable } from '../../hooks/useCredential'
 import { useGasless } from '../../hooks/useGasless'
 import { selfConfigured } from '../../config/self'
@@ -103,46 +104,37 @@ export default function Onboard() {
   const previewName = step === 'done' ? credential?.username : step === 'username' ? username : confirmed
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-10 pb-24 sm:px-6 md:pt-14">
-      {step !== 'done' && (
-        <div className="max-w-xl">
-          <h1 className="text-3xl font-semibold tracking-[-0.045em] text-ink sm:text-4xl">Get verified</h1>
-          <ol className="mt-6 flex items-center gap-3" aria-label="Progress">
-            {STEPS.map((s, i) => (
-              <li key={s} className="flex items-center gap-3" aria-current={i === stepIndex ? 'step' : undefined}>
-                <span
-                  className={`inline-flex items-center gap-1.5 text-sm transition-colors ${i < stepIndex ? 'text-ink' : i === stepIndex ? 'font-medium text-ink' : 'text-muted'}`}
-                >
-                  {i < stepIndex ? <CheckCircle weight="fill" className="size-4 text-accent" /> : <span className="font-mono text-xs">{i + 1}</span>}
-                  {s}
-                </span>
-                {i < STEPS.length - 1 && <span className="h-px w-8 bg-line-strong" />}
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
+    <PageContainer>
+      <PageHeader
+        title={step === 'done' ? (fresh ? `Welcome, @${credential.username}` : "You're verified") : 'Get verified'}
+        description={
+          step === 'done'
+            ? 'Your credential is live on Hedera. Every app that checks UWI now sees one unique human.'
+            : 'Prove you are one unique person, once. About two minutes, and you never pay gas.'
+        }
+        meta={
+          step !== 'done' && (
+            <ol className="flex items-center gap-3" aria-label="Progress">
+              {STEPS.map((s, i) => (
+                <li key={s} className="flex items-center gap-3" aria-current={i === stepIndex ? 'step' : undefined}>
+                  <span className={`inline-flex items-center gap-1.5 text-sm transition-colors ${i <= stepIndex ? 'text-ink' : 'text-muted'} ${i === stepIndex ? 'font-medium' : ''}`}>
+                    {i < stepIndex ? (
+                      <CheckCircle weight="fill" className="size-4 text-accent" />
+                    ) : (
+                      <span className={`grid size-5 place-items-center rounded-full text-[11px] ${i === stepIndex ? 'bg-ink text-bg' : 'bg-surface-2 text-muted'}`}>{i + 1}</span>
+                    )}
+                    {s}
+                  </span>
+                  {i < STEPS.length - 1 && <span className="h-px w-6 bg-line-strong sm:w-10" />}
+                </li>
+              ))}
+            </ol>
+          )
+        }
+      />
 
-      <div className={`grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16 ${step === 'done' ? '' : 'mt-10'}`}>
-        <div className={`lg:sticky lg:top-24 lg:order-2 ${step === 'done' ? 'lg:order-1' : ''}`}>
-          <motion.div
-            key={step === 'done' ? 'final' : 'preview'}
-            initial={fresh ? { opacity: 0, scale: 0.7, rotateY: -60 } : false}
-            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-            transition={{ type: 'spring', stiffness: 70, damping: 13 }}
-            className="mx-auto max-w-[520px] [perspective:1200px]"
-          >
-            <HoloCard
-              username={previewName}
-              address={address}
-              tokenId={credential?.tokenId}
-              issuedAt={credential?.issuedAt}
-              proof={credential?.proof ?? 'pending'}
-            />
-          </motion.div>
-        </div>
-
-        <section className={`min-w-0 ${step === 'done' ? 'lg:order-2 lg:pt-6' : 'lg:order-1'}`}>
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <section className="min-w-0 rounded-[20px] border border-line bg-surface p-6 sm:p-8">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={step}
@@ -173,12 +165,31 @@ export default function Onboard() {
                 />
               )}
               {step === 'issuing' && <Waiting text="Issuing your credential on Hedera..." sub="This usually takes a few seconds." />}
-              {step === 'done' && <DoneStep credential={credential} fresh={fresh} />}
+              {step === 'done' && <DoneStep credential={credential} />}
             </motion.div>
           </AnimatePresence>
         </section>
+
+        <div className="lg:sticky lg:top-24">
+          <motion.div
+            key={step === 'done' ? 'final' : 'preview'}
+            initial={fresh ? { opacity: 0, scale: 0.7, rotateY: -60 } : false}
+            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+            transition={{ type: 'spring', stiffness: 70, damping: 13 }}
+            className="mx-auto max-w-[520px] [perspective:1200px] lg:pt-4"
+          >
+            <HoloCard
+              username={previewName}
+              address={address}
+              tokenId={credential?.tokenId}
+              issuedAt={credential?.issuedAt}
+              proof={credential?.proof ?? 'pending'}
+            />
+            <p className="mt-4 text-center text-xs text-muted">{step === 'done' ? 'Tilt it.' : 'Live preview of your card'}</p>
+          </motion.div>
+        </div>
       </div>
-    </div>
+    </PageContainer>
   )
 }
 
@@ -213,7 +224,7 @@ function ConnectStep() {
         title="Connect your wallet"
         body="Your credential is bound to this wallet. Pick the one you use with apps; you can move it later by verifying again."
       />
-      <Button size="lg" variant="ink" className="mt-8" onClick={() => open()}>
+      <Button size="lg" className="mt-8" onClick={() => open()}>
         <Wallet className="size-4" /> Connect wallet
       </Button>
       <ul className="mt-10 grid gap-3 border-t border-line pt-8 text-sm text-ink-2">
@@ -359,47 +370,35 @@ function VerifyStep({ address, username, onIssuing, onStart, onBack }) {
   )
 }
 
-function DoneStep({ credential, fresh }) {
+function DoneStep({ credential }) {
   return (
     <div>
       <CheckCircle weight="fill" className="size-7 text-ok" />
-      <h1 className="mt-4 text-3xl font-semibold tracking-[-0.045em] text-ink sm:text-4xl">
-        {fresh ? `Welcome, @${credential.username}` : "You're already verified"}
-      </h1>
-      <p className="mt-3 max-w-md text-ink-2">
-        {fresh
-          ? "You're counted. Every app that checks UWI now sees this wallet as one unique human."
-          : `This wallet holds credential No. ${credential.tokenId}. There's nothing else to do.`}
-      </p>
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Button to="/app" size="lg">
-          Open dashboard <ArrowRight className="size-4" />
-        </Button>
-      </div>
-
-      <div className="mt-10 border-t border-line pt-6">
-        <p className="text-sm font-medium text-ink">What you can do now</p>
-        <ul className="mt-3 grid gap-2">
-          {[
-            { icon: Door, title: 'Run a Sybil-proof list', body: 'Allowlists and waitlists that admit each human once.', to: '/app/gates?new=1' },
-            { icon: UserCircle, title: 'Share your profile', body: `Anyone can check @${credential.username} is a verified human.`, to: `/u/${credential.username}` },
-            { icon: Code, title: 'Check humans in your app', body: 'One contract call or one GET request.', to: '/developers' },
-          ].map(({ icon: Icon, title, body, to }, i) => (
-            <motion.li key={to} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.08, ease: easeOutExpo, duration: 0.5 }}>
-              <Link to={to} className="group flex items-center gap-4 rounded-[20px] border border-line bg-surface p-4 transition-colors hover:border-line-strong">
-                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
-                  <Icon className="size-5" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-medium text-ink">{title}</span>
-                  <span className="block truncate text-[13px] text-ink-2">{body}</span>
-                </span>
-                <ArrowRight className="size-4 text-muted transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </motion.li>
-          ))}
-        </ul>
-      </div>
+      <h2 className="mt-4 text-xl font-semibold tracking-[-0.03em] text-ink">Credential No. {credential.tokenId} is yours</h2>
+      <p className="mt-1.5 text-ink-2">Here is what you can do with it.</p>
+      <ul className="mt-6 grid gap-2">
+        {[
+          { icon: Door, title: 'Run a Sybil-proof list', body: 'Allowlists and waitlists that admit each human once.', to: '/app/gates?new=1' },
+          { icon: UserCircle, title: 'Share your profile', body: `Anyone can check @${credential.username} is a verified human.`, to: `/u/${credential.username}` },
+          { icon: Code, title: 'Check humans in your app', body: 'One contract call or one GET request.', to: '/app/developers' },
+        ].map(({ icon: Icon, title, body, to }, i) => (
+          <motion.li key={to} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.08, ease: easeOutExpo, duration: 0.5 }}>
+            <Link to={to} className="group flex items-center gap-4 rounded-[14px] border border-line bg-bg p-4 transition-colors hover:border-line-strong">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
+                <Icon className="size-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-ink">{title}</span>
+                <span className="block truncate text-[13px] text-ink-2">{body}</span>
+              </span>
+              <ArrowRight className="size-4 text-muted transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </motion.li>
+        ))}
+      </ul>
+      <Button to="/app" size="lg" className="mt-6">
+        Open dashboard <ArrowRight className="size-4" />
+      </Button>
     </div>
   )
 }

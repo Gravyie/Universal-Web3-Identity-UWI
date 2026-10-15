@@ -24,7 +24,7 @@ export function AccountMenu({ size = 'sm' }) {
 
   if (!isConnected) {
     return (
-      <Button size={size} variant="ink" onClick={() => open()} loading={isConnecting && !isReconnecting}>
+      <Button size={size} onClick={() => open()} loading={isConnecting && !isReconnecting}>
         {!isConnecting && <Wallet className="size-4" />}
         Connect
       </Button>
@@ -71,7 +71,7 @@ export function AccountMenu({ size = 'sm' }) {
               <IdentificationCard className="size-4" /> Public profile
             </Menu.Item>
           ) : (
-            <Menu.Item className={item} onSelect={() => navigate('/start')}>
+            <Menu.Item className={item} onSelect={() => navigate('/app/verify')}>
               <IdentificationCard className="size-4" /> Get verified
             </Menu.Item>
           )}

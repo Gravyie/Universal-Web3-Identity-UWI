@@ -10,8 +10,8 @@ const ThemeContext = createContext(null)
 /** Appearance preferences: light/dark mode, accent colour and holo card finish. */
 export function ThemeProvider({ children }) {
   const saved = readJSON(STORAGE_KEY, {})
-  const [mode, setMode] = useState(MODES.includes(saved.mode) ? saved.mode : 'system')
-  const [accent, setAccent] = useState(ACCENTS.some((a) => a.id === saved.accent) ? saved.accent : 'cobalt')
+  const [mode, setMode] = useState(MODES.includes(saved.mode) ? saved.mode : 'dark')
+  const [accent, setAccent] = useState(ACCENTS.some((a) => a.id === saved.accent) ? saved.accent : 'aurora')
   const [finish, setFinish] = useState(FINISHES.includes(saved.finish) ? saved.finish : 'holo')
   const prefersDark = useMediaQuery('(prefers-color-scheme: dark)')
   const resolved = mode === 'system' ? (prefersDark ? 'dark' : 'light') : mode

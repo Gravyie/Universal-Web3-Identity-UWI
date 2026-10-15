@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { toast } from 'sonner'
 import { ArrowRight, CheckCircle, Circle, Clock, Door, Infinity as InfinityIcon, SealCheck, UsersThree, XCircle } from '@phosphor-icons/react'
 import { Button } from '../components/ui/Button'
+import { PageContainer, PageHeader } from '../components/layout/Page'
 import { Badge, EmptyState, Skeleton } from '../components/ui/primitives'
 import { HoloCard } from '../components/holo/HoloCard'
 import { MemberStack } from '../components/GateCard'
@@ -40,18 +41,23 @@ export default function GateJoin() {
 
   if (status === 'loading') {
     return (
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.2fr_1fr]">
-        <div>
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="mt-4 h-12 w-3/4" />
-          <Skeleton className="mt-4 h-5 w-2/3" />
+      <PageContainer>
+        <Skeleton className="mb-8 h-9 w-72" />
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+          <Skeleton className="h-64 rounded-[20px]" />
+          <Skeleton className="h-96 rounded-[20px]" />
         </div>
-        <Skeleton className="h-96 rounded-[20px]" />
-      </div>
+      </PageContainer>
     )
   }
   if (status !== 'found') {
-    return <EmptyState icon={Door} title="Gate not found" body="Check the link with whoever shared it." action={<Button to="/">Go home</Button>} />
+    return (
+      <PageContainer>
+        <div className="rounded-[20px] border border-dashed border-line-strong">
+          <EmptyState icon={Door} title="Gate not found" body="Check the link with whoever shared it." action={<Button to="/app">Go to the app</Button>} />
+        </div>
+      </PageContainer>
+    )
   }
   return <Gate gate={gate} rows={rows} />
 }
@@ -90,25 +96,22 @@ function Gate({ gate, rows }) {
   }
 
   let action
-  if (!isConnected) action = <Button size="lg" variant="ink" className="w-full" onClick={() => open()}>Connect wallet</Button>
-  else if (credStatus === 'none') action = <Button size="lg" to="/start" className="w-full">Get verified to join</Button>
-  else if (hasCred && !strictOk) action = <Button size="lg" to="/start" variant="secondary" className="w-full">Needs a Self passport proof</Button>
+  if (!isConnected) action = <Button size="lg" className="w-full" onClick={() => open()}>Connect wallet</Button>
+  else if (credStatus === 'none') action = <Button size="lg" to="/app/verify" className="w-full">Get verified to join</Button>
+  else if (hasCred && !strictOk) action = <Button size="lg" to="/app/verify" variant="secondary" className="w-full">Needs a Self passport proof</Button>
   else if (state !== 'open') action = <Button size="lg" disabled className="w-full">This gate is {state}</Button>
   else action = <Button size="lg" className="w-full" onClick={join} loading={busy} disabled={!hasCred}>{busy ? 'Joining...' : 'Join with one signature'}</Button>
 
   const s = STATE[state]
 
   return (
-    <div className="relative">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[420px]"
-        style={{ background: 'radial-gradient(60% 100% at 20% 0%, var(--accent-soft), transparent 70%)' }}
-      />
-      <div className="relative mx-auto grid max-w-6xl items-start gap-10 px-4 py-12 sm:px-6 md:py-16 lg:grid-cols-[1.2fr_1fr] lg:gap-16">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: easeOutExpo }}>
+    <PageContainer>
+      <PageHeader
+        title={gate.name}
+        description={gate.description || undefined}
+        meta={
           <div className="flex items-center gap-2 text-sm text-ink-2">
-            <Door className="size-4" />
+            <Badge tone={s.tone}>{s.label}</Badge>
             {host ? (
               <span>
                 Hosted by{' '}
@@ -119,14 +122,12 @@ function Gate({ gate, rows }) {
             ) : (
               <span>UWI gate</span>
             )}
-            <Badge tone={s.tone}>{s.label}</Badge>
           </div>
-          <h1 className="mt-4 text-[clamp(2rem,4.2vw,3.25rem)] leading-[1.05] font-semibold tracking-[-0.045em] text-balance break-words text-ink">
-            {gate.name}
-          </h1>
-          {gate.description && <p className="mt-4 max-w-xl text-lg text-ink-2">{gate.description}</p>}
-
-          <dl className="mt-8 grid max-w-xl grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
+        }
+      />
+      <div className="grid items-start gap-6 lg:grid-cols-[1.2fr_1fr]">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: easeOutExpo }} className="rounded-[20px] border border-line bg-surface p-6 sm:p-8">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
             <div>
               <dt className="flex items-center gap-1.5 text-sm text-muted"><UsersThree className="size-4" /> Joined</dt>
               <dd className="mt-1 text-xl font-semibold tracking-[-0.03em] text-ink tabular-nums">
@@ -161,7 +162,7 @@ function Gate({ gate, rows }) {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1, ease: easeOutExpo }}
-          className="rounded-[20px] border border-line-strong bg-bg-elev p-5 shadow-card sm:p-6"
+          className="rounded-[20px] border border-line bg-surface p-6 sm:p-8"
         >
           <AnimatePresence mode="wait" initial={false}>
             {joined ? (
@@ -203,6 +204,6 @@ function Gate({ gate, rows }) {
           </AnimatePresence>
         </motion.div>
       </div>
-    </div>
+    </PageContainer>
   )
 }

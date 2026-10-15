@@ -13,6 +13,7 @@ import { useGasless } from '../../hooks/useGasless'
 import { JoinsChart } from '../../components/JoinsChart'
 import { hueFor } from '../../components/holo/print'
 import { formatDate, formatNumber, shortAddress, timeAgo } from '../../lib/format'
+import { PageContainer, PageHeader } from '../../components/layout/Page'
 
 export default function GateDetail() {
   const { id } = useParams()
@@ -33,11 +34,11 @@ export default function GateDetail() {
 
   if (status === 'loading') {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        <Skeleton className="h-8 w-64" />
+      <PageContainer>
+        <Skeleton className="h-9 w-64" />
         <Skeleton className="mt-8 h-28 rounded-[20px]" />
         <Skeleton className="mt-6 h-64 rounded-[20px]" />
-      </div>
+      </PageContainer>
     )
   }
   if (status !== 'found') {
@@ -70,23 +71,19 @@ export default function GateDetail() {
   ]
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <Link to="/app/gates" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
-        <ArrowLeft className="size-3.5" /> Gates
-      </Link>
-
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-3">
-            <h1 className="truncate text-2xl font-semibold tracking-[-0.035em] text-ink sm:text-3xl">{gate.name}</h1>
+    <PageContainer>
+      <PageHeader
+        back={{ to: '/app/gates', label: 'Gates' }}
+        title={gate.name}
+        description={gate.description || undefined}
+        meta={
+          <div className="flex items-center gap-3 text-sm text-muted">
             <Badge tone={state === 'open' ? 'ok' : state === 'full' ? 'warn' : 'neutral'}>{state[0].toUpperCase() + state.slice(1)}</Badge>
-          </div>
-          {gate.description && <p className="mt-1.5 max-w-2xl text-ink-2">{gate.description}</p>}
-          <p className="mt-2 text-sm text-muted">
             Gate No. {gate.id} created {timeAgo(gate.createdAt)}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+          </div>
+        }
+        actions={
+          <>
           <Button size="sm" onClick={() => copy(shareUrl, 'Join link copied')}>
             <LinkSimple className="size-4" /> Copy join link
           </Button>
@@ -101,10 +98,11 @@ export default function GateDetail() {
               <LockSimple className="size-4" /> Close
             </Button>
           )}
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      <dl className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-[20px] border border-line bg-line md:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[20px] border border-line bg-line md:grid-cols-4">
         {stats.map(([k, v]) => (
           <div key={k} className="bg-surface p-5">
             <dt className="text-sm text-muted">{k}</dt>
@@ -222,6 +220,6 @@ export default function GateDetail() {
           </Button>
         </div>
       </Sheet>
-    </div>
+    </PageContainer>
   )
 }

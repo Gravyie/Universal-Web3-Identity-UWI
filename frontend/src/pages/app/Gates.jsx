@@ -8,6 +8,7 @@ import { GateCard } from '../../components/GateCard'
 import { useCredential } from '../../hooks/useCredential'
 import { useMyGates } from '../../hooks/useGates'
 import { CreateGateSheet } from './CreateGateSheet'
+import { PageContainer, PageHeader } from '../../components/layout/Page'
 
 export default function Gates() {
   const { address } = useAccount()
@@ -58,7 +59,7 @@ export default function Gates() {
           icon={Door}
           title="You haven't created a gate"
           body="Gates are allowlists, waitlists and sign-ups that admit each verified human once. Create one and share the link."
-          action={credential ? <Button variant="secondary" onClick={() => setCreating(true)}><Plus className="size-4" /> Create a gate</Button> : <Button to="/start" variant="secondary">Get verified first</Button>}
+          action={credential ? <Button variant="secondary" onClick={() => setCreating(true)}><Plus className="size-4" /> Create a gate</Button> : <Button to="/app/verify" variant="secondary">Get verified first</Button>}
         />
       </div>
     ) : (
@@ -68,17 +69,11 @@ export default function Gates() {
     )
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-[-0.035em] text-ink sm:text-3xl">Gates</h1>
-          <p className="mt-1.5 text-ink-2">Sybil-proof lists. One entry per human, gasless to join.</p>
-        </div>
-        {createButton}
-      </div>
+    <PageContainer>
+      <PageHeader title="Gates" description="Sybil-proof lists. One entry per human, gasless to join." actions={createButton} />
 
       <Tabs
-        className="mt-8"
+        className=""
         value={tab}
         onValueChange={setTab}
         layoutId="gates-tab"
@@ -96,6 +91,6 @@ export default function Gates() {
       </Tabs>
 
       <CreateGateSheet open={creating} onOpenChange={setCreating} />
-    </div>
+    </PageContainer>
   )
 }

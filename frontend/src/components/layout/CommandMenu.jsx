@@ -76,10 +76,10 @@ export function CommandMenu() {
               <Command.Group heading="Go to" className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-muted">
                 {[
                   { icon: House, label: 'Home', to: '/' },
-                  { icon: IdentificationCard, label: 'Get verified', to: '/start' },
+                  { icon: IdentificationCard, label: 'Get verified', to: '/app/verify' },
                   { icon: SquaresFour, label: 'Dashboard', to: '/app' },
                   { icon: Door, label: 'Gates', to: '/app/gates' },
-                  { icon: BookOpen, label: 'Developers', to: '/developers' },
+                  { icon: BookOpen, label: 'Developers', to: '/app/developers' },
                 ].map(({ icon: Icon, label, to }) => (
                   <Command.Item key={to} value={label} onSelect={() => go(to)} className={itemCls}>
                     <Icon className="size-4" /> {label}
