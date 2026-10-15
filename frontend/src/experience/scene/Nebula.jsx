@@ -60,7 +60,7 @@ function Cloud({ c }) {
 export function Nebula() {
   const root = useRef()
   useFrame(() => {
-    const on = xp.progress > NOVA - 0.005
+    const on = novaTime() > 0
     root.current.visible = on
     if (!on) return
     // the nebula recedes in the finale so the galaxy of people stands out

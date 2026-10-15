@@ -77,9 +77,11 @@ export function useChapters() {
       }
       if (prev < NOVA && xp.progress >= NOVA) {
         score.nova(0.05)
-        xp.novaStart = now / 1000
       }
-      if (xp.progress < NOVA - 0.002) xp.novaStart = 0
+      // the supernova's clock: forward past it (faster when far ahead), rewinding before it
+      if (xp.progress >= NOVA) xp.novaT = Math.min(6, xp.novaT + dt * (xp.progress > NOVA + STEP * 0.75 ? 3 : 1))
+      else if (xp.progress < NOVA - STEP * 0.4) xp.novaT = 0
+      else xp.novaT = Math.max(0, xp.novaT - dt * 2.5)
       const i = Math.round(xp.progress / STEP)
       if (i !== idx.current) {
         idx.current = i

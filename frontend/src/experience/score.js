@@ -204,6 +204,7 @@ function swell(seconds, from, to, peak) {
 const listeners = new Set()
 const emit = () => listeners.forEach((fn) => fn())
 let ducked = false
+let lastWhoosh = 0
 let suspendTimer = 0
 const level = () => (ducked ? 0.3 : 0.9)
 
@@ -263,7 +264,11 @@ export const score = {
     })
   },
   whoosh() {
-    if (on) swell(0.9, 300, 3200, 0.06)
+    // one per move: a jump across several chapters is one sweep, not a burst
+    const now = performance.now()
+    if (!on || now - lastWhoosh < 450) return
+    lastWhoosh = now
+    swell(0.9, 300, 3200, 0.06)
   },
   /** Riser into the supernova, then the boom. */
   nova(delay = 1.1) {

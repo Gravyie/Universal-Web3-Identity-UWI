@@ -69,7 +69,7 @@ function lensedMaterial(map) {
           float k = uLens.z / mvPosition.z;
           vec2 q = mvPosition.xy * k - uLens.xy;
           float r = length(q);
-          float re2 = uLensRE * uLensRE * behind / (behind + 2.5);
+          float re2 = uLensRE * uLensRE * behind / (behind + 1.6);
           float rp = 0.5 * (r + sqrt(r * r + 4.0 * re2));
           mvPosition.xy = (uLens.xy + q * (rp / max(r, 1e-4))) / k;
         }
@@ -156,7 +156,7 @@ export function Swarm({ count = 1800 }) {
     // the lens sits at the hole, in view space, and is as strong as the hole is grown
     const lens = material.userData.uniforms
     lens.uLens.value.copy(lensCenter.set(0, 0, 0).applyMatrix4(state.camera.matrixWorldInverse))
-    lens.uLensRE.value = 1.22 * xp.bhScale
+    lens.uLensRE.value = 1.6 * xp.bhScale
     const crowd = smooth(seg(p, 0.03, P.problem))
     const cam = state.camera.position
 

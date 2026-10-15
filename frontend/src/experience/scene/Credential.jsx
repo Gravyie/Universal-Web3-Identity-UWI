@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { novaTime, xp } from '../store'
-import { NOVA, P, seg, smooth } from '../chapters'
+import { seg, smooth } from '../chapters'
 import { HoloCard } from '../../components/holo/HoloCard'
 import { HERO_CARD } from '../heroCard'
 
@@ -26,14 +26,13 @@ export function Credential() {
   const width = useRef(0)
 
   useFrame((state) => {
-    const p = xp.progress
     const t = state.clock.elapsedTime
     const g = group.current
     const node = el.current
     if (!g || !node) return
     // condenses out of the remnant on the explosion's clock
     // emerges as the fireball fades, while the shell is still expanding
-    const born = p >= NOVA ? smooth(seg(novaTime(), 0.9, 2.4)) : 0
+    const born = smooth(seg(novaTime(), 0.9, 2.4))
     g.visible = born > 0.001
     node.style.visibility = g.visible ? 'visible' : 'hidden'
     if (!g.visible) return
@@ -57,7 +56,8 @@ export function Credential() {
     // it emerges out of the remnant's light: a card from the first frame, sharpening and rising to face you
     const rise = 1 - born
     node.style.transform = xp.reduced ? 'none' : `perspective(1400px) rotateX(${(rise * 22).toFixed(1)}deg) translateY(${(rise * 18).toFixed(1)}px)`
-    node.style.opacity = String(born)
+    // and it fades with the story's text as the page scrolls up over it
+    node.style.opacity = String(born * (1 - xp.storyFade))
     node.style.filter = born < 1 ? `blur(${((1 - born) * 10).toFixed(1)}px) brightness(${(1 + (1 - born) * 1.6).toFixed(2)})` : 'none'
     node.style.pointerEvents = born >= 1 ? 'auto' : 'none'
   })

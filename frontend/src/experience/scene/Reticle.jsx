@@ -1,9 +1,9 @@
 /** A HUD-style callout: label and value at the end of a leader line from the ring. */
-function Callout({ at, side, label, value }) {
+function Callout({ at, side, label, value, className = '' }) {
   const left = side.includes('l')
   const top = side.includes('t')
   return (
-    <div className="reticle-callout absolute" style={{ left: `${at[0]}%`, top: `${at[1]}%` }}>
+    <div className={`reticle-callout absolute ${className}`} style={{ left: `${at[0]}%`, top: `${at[1]}%` }}>
       <div className={`absolute flex items-end gap-0 ${left ? 'right-0 flex-row-reverse' : 'left-0'} ${top ? 'bottom-0' : 'top-0 items-start'}`}>
         <svg width="34" height="22" className="shrink-0 overflow-visible text-white/30" aria-hidden="true">
           <path d={top ? (left ? 'M34 22 L14 2 L0 2' : 'M0 22 L20 2 L34 2') : left ? 'M34 0 L14 20 L0 20' : 'M0 0 L20 20 L34 20'} fill="none" stroke="currentColor" vectorEffect="non-scaling-stroke" />
@@ -40,8 +40,9 @@ export function Reticle() {
       <div className="max-lg:hidden">
         <Callout at={[14.6, 14.6]} side="tl" label="Subject" value="@you · N°000001" />
         <Callout at={[85.4, 14.6]} side="tr" label="Print" value="17 ridges · whorl" />
-        <Callout at={[14.6, 85.4]} side="bl" label="Derived from" value="0x7a3F…4F61" />
-        <Callout at={[85.4, 85.4]} side="br" label="Biometrics stored" value="0 bytes" />
+        {/* the lower pair would crowd the copy on short screens */}
+        <Callout at={[14.6, 85.4]} side="bl" label="Derived from" value="0x7a3F…4F61" className="[@media(max-height:860px)]:hidden" />
+        <Callout at={[85.4, 85.4]} side="br" label="Biometrics stored" value="0 bytes" className="[@media(max-height:860px)]:hidden" />
       </div>
     </div>
   )

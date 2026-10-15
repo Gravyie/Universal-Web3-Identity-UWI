@@ -15,7 +15,7 @@ const SHOTS = [
   { p: NOVA, pos: [-0.8, 0.0, 7.8], look: [-1.45, -0.4, 0], fov: 40 },
   { p: P.dawn, pos: [-1.0, -0.2, 6.9], look: [-1.55, -0.5, 0], fov: 40 },
   { p: P.everywhere, pos: [0, 0.75, 10.8], look: [0, -0.35, -1], fov: 44 },
-  { p: P.cta, pos: [-2.6, 2.6, 11.5], look: [-2.9, 0.3, 0], fov: 40 },
+  { p: P.cta, pos: [-2.1, 1.7, 8.8], look: [-2.4, 0.2, 0], fov: 42 },
 ]
 
 // Phones are too narrow for side-by-side framing; centre the subject and keep text below it.
@@ -23,7 +23,7 @@ const MOBILE = {
   [P.hero]: { pos: [0, -0.6, 17.5], look: [0, -2.7, 0] },
   [NOVA]: { pos: [0, 0.9, 9.2], look: [0, -0.5, 0] },
   [P.dawn]: { pos: [0, 0.9, 8.6], look: [0, -0.5, 0] },
-  [P.cta]: { pos: [0, 1.6, 13.5], look: [0, -2.3, 0] },
+  [P.cta]: { pos: [0, 1.4, 11.5], look: [0, -2.0, 0] },
 }
 const shot = (s) => (xp.mobile && MOBILE[s.p] ? { ...s, ...MOBILE[s.p] } : s)
 
@@ -49,6 +49,14 @@ export function CameraRig() {
 
     cam.position.lerpVectors(a1.fromArray(A.pos), a2.fromArray(B.pos), k)
     look.lerpVectors(b1.fromArray(A.look), b2.fromArray(B.look), k)
+
+    // The hero's print and reticle are composed around the copy; on short
+    // screens the camera backs off so they keep clear of it.
+    const hero = 1 - Math.min(1, p / (P.problem * 0.6))
+    if (hero > 0 && !xp.mobile) {
+      const back = 1 + (THREE.MathUtils.clamp(900 / state.size.height, 1, 1.35) - 1) * hero
+      cam.position.sub(look).multiplyScalar(back).add(look)
+    }
 
     // Shots are framed for widescreen; on tall screens, pull back so the
     // subject stays in frame, most for close-ups.

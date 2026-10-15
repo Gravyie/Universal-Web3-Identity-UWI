@@ -70,7 +70,8 @@ export default function Landing() {
     const onScroll = () => {
       const y = window.scrollY
       const h = window.innerHeight
-      root.current?.style.setProperty('--story-fade', String(Math.min(1, y / (h * 0.5))))
+      xp.storyFade = Math.min(1, y / (h * 0.5))
+      root.current?.style.setProperty('--story-fade', String(xp.storyFade))
       root.current?.style.setProperty('--story-dim', String(Math.min(1, y / h)))
       setFaded(y > h * 0.25)
       setCovered(y > h * 1.05)

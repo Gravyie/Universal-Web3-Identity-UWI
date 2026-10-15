@@ -98,7 +98,7 @@ export function Constellation() {
   })
 
   return (
-    <group ref={group} position={[0, 0.1, -0.6]} rotation={[-1.12, 0.12, 0.35]} visible={false}>
+    <group ref={group} position={[0, 0.1, -0.8]} rotation={[-0.78, 0.1, 0.3]} scale={1.35} visible={false}>
       <points geometry={geometry} material={material} frustumCulled={false} />
     </group>
   )

@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { novaTime, xp } from '../store'
 import { NOVA, P, seg } from '../chapters'
 
+const STEP_BACK = 0.07 // the explosion stays drawn while it rewinds just before the nova
 const SIZE = 30 // world units covered by the billboard
 
 /*
@@ -111,7 +112,7 @@ export function Supernova() {
     // runs on its own clock once triggered, so it always plays out in full
     const t0 = novaTime()
     const tau = Math.min(1, t0 / 3.6)
-    const on = p >= NOVA && t0 > 0 && tau < 1
+    const on = p >= NOVA - STEP_BACK && t0 > 0 && tau < 1
     mesh.current.visible = on
     if (!on) return
     mesh.current.quaternion.copy(state.camera.quaternion)

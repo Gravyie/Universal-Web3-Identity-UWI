@@ -10,7 +10,8 @@ export const xp = {
   inPage: false, // true once the viewer has scrolled past the experience into the page
   revealed: false, // the preloader has lifted and the hero is on screen
   bhScale: 0, // the black hole's current size, for lensing what passes behind it
-  novaStart: 0, // when (s) the story crossed into the supernova
+  novaT: 0, // the supernova's own clock, in seconds; runs forward past it and rewinds before it
+  storyFade: 0, // 0..1 as the page scrolls up over the story
   card: { x: 0, y: 0.1, z: 0, halfW: 1.7, halfH: 1.07 }, // the credential's live centre and half size, in world units
 }
 
@@ -20,12 +21,12 @@ export const xpProgress = motionValue(0)
 if (import.meta.env.DEV && typeof window !== 'undefined') window.__xp = xp
 
 /**
- * Seconds since the supernova went off. The explosion runs on its own clock
- * once triggered, so it plays out in full however fast the scroll moves.
- * 0 before it, a large number when there is nothing to play (reduced motion).
+ * The supernova's clock, in seconds. It runs on its own once the story
+ * passes the explosion, so the explosion always plays out in full however
+ * fast the scroll moves; scrolling back rewinds it, so it plays in reverse;
+ * and jumping far ahead fast-forwards it, so later chapters arrive complete.
  */
 export function novaTime() {
-  if (xp.progress < NOVA) return 0
-  if (xp.reduced || !xp.novaStart) return 99
-  return performance.now() / 1000 - xp.novaStart
+  if (xp.reduced) return xp.progress >= NOVA ? 99 : 0
+  return xp.novaT
 }
