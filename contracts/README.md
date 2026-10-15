@@ -1,66 +1,18 @@
-## Foundry
+# UWI contracts
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+Foundry project. Solidity 0.8.24, OpenZeppelin 5, targeting Cancun (supported by Hedera).
 
-Foundry consists of:
+- **`UWIRegistry`**: soulbound ERC-721 (ERC-5192 locked). One credential per Self nullifier and per wallet, unique lowercase usernames, attestor-only `issue` and `recover`, holder `revoke` and gasless `revokeBySig`. `isVerifiedHuman` accepts any credential; `isVerifiedHumanStrict` only Self-backed ones.
+- **`UWIGates`**: lists that admit each credential once. Creators must be verified humans. `createGate`, `join` and `close` each have an EIP-712 `…BySig` twin for gasless use.
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+```bash
+forge test                    # 18 tests
+forge fmt --check
 
-## Documentation
-
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
+# Deploy (deployer becomes owner and, unless ATTESTOR is set, the attestor)
+cp .env.example .env          # PRIVATE_KEY of a funded testnet account
+set -a && . ./.env && set +a
+forge script script/Deploy.s.sol --rpc-url hedera_testnet --broadcast --slow
 ```
 
-### Test
-
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+Get test HBAR from the [Hedera faucet](https://portal.hedera.com/faucet). After deploying, update `VITE_REGISTRY_ADDRESS` and `VITE_GATES_ADDRESS` in the frontend.

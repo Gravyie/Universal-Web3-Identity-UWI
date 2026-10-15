@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAppKit } from '@reown/appkit/react'
 import { useAccount } from 'wagmi'
 import { AnimatePresence, motion } from 'motion/react'
@@ -8,12 +8,15 @@ import {
   ArrowRight,
   At,
   CheckCircle,
+  Code,
+  Door,
   Flask,
   IdentificationCard,
   Info,
   Key,
   ScanSmiley,
   ShieldCheck,
+  UserCircle,
   Wallet,
   XCircle,
 } from '@phosphor-icons/react'
@@ -372,9 +375,30 @@ function DoneStep({ credential, fresh }) {
         <Button to="/app" size="lg">
           Open dashboard <ArrowRight className="size-4" />
         </Button>
-        <Button to={`/u/${credential.username}`} size="lg" variant="secondary">
-          View public profile
-        </Button>
+      </div>
+
+      <div className="mt-10 border-t border-line pt-6">
+        <p className="text-sm font-medium text-ink">What you can do now</p>
+        <ul className="mt-3 grid gap-2">
+          {[
+            { icon: Door, title: 'Run a Sybil-proof list', body: 'Allowlists and waitlists that admit each human once.', to: '/app/gates?new=1' },
+            { icon: UserCircle, title: 'Share your profile', body: `Anyone can check @${credential.username} is a verified human.`, to: `/u/${credential.username}` },
+            { icon: Code, title: 'Check humans in your app', body: 'One contract call or one GET request.', to: '/developers' },
+          ].map(({ icon: Icon, title, body, to }, i) => (
+            <motion.li key={to} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.08, ease: easeOutExpo, duration: 0.5 }}>
+              <Link to={to} className="group flex items-center gap-4 rounded-[20px] border border-line bg-surface p-4 transition-colors hover:border-line-strong">
+                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
+                  <Icon className="size-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium text-ink">{title}</span>
+                  <span className="block truncate text-[13px] text-ink-2">{body}</span>
+                </span>
+                <ArrowRight className="size-4 text-muted transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </motion.li>
+          ))}
+        </ul>
       </div>
     </div>
   )

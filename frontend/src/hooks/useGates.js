@@ -28,7 +28,13 @@ export function gateState(gate) {
 
 export function useGate(id) {
   const gateId = id ? BigInt(id) : undefined
-  const q = useReadContract({ ...gates, functionName: 'getGate', args: [gateId], query: { enabled: gateId !== undefined } })
+  // A gate created a moment ago may not be visible on the RPC yet, so retry before giving up.
+  const q = useReadContract({
+    ...gates,
+    functionName: 'getGate',
+    args: [gateId],
+    query: { enabled: gateId !== undefined, retry: 5, retryDelay: 1500 },
+  })
   let status = 'loading'
   if (q.isError) status = q.error?.message?.includes('UnknownGate') ? 'none' : 'error'
   else if (q.data) status = 'found'
@@ -42,7 +48,7 @@ export function useGateMembers(id, count) {
     ...gates,
     functionName: 'members',
     args: [gateId, 0n, 500n],
-    query: { enabled: gateId !== undefined && count !== undefined },
+    query: { enabled: gateId !== undefined && count !== undefined, refetchInterval: 6_000 },
   })
   const members = membersQ.data ?? []
   const credsQ = useReadContracts({

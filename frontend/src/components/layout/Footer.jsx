@@ -32,8 +32,8 @@ const COLS = [
 export function Footer() {
   return (
     <footer className="border-t border-line">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_repeat(3,1fr)]">
-        <div className="max-w-xs">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+        <div className="col-span-2 max-w-xs md:col-span-1">
           <div className="flex items-center gap-2 text-ink">
             <LogoMark className="size-5" />
             <span className="font-semibold tracking-[-0.04em]">UWI</span>

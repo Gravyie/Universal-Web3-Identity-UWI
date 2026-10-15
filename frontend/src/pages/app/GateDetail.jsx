@@ -10,6 +10,7 @@ import { Sheet } from '../../components/ui/Sheet'
 import { Badge, CopyButton, EmptyState, Skeleton, useCopy } from '../../components/ui/primitives'
 import { useGate, useGateMembers, gateState } from '../../hooks/useGates'
 import { useGasless } from '../../hooks/useGasless'
+import { JoinsChart } from '../../components/JoinsChart'
 import { hueFor } from '../../components/holo/print'
 import { formatDate, formatNumber, shortAddress, timeAgo } from '../../lib/format'
 
@@ -111,6 +112,12 @@ export default function GateDetail() {
           </div>
         ))}
       </dl>
+
+      {rows.length > 0 && (
+        <div className="mt-6">
+          <JoinsChart joins={rows} since={gate.createdAt} capacity={gate.capacity} />
+        </div>
+      )}
 
       <section className="mt-10">
         <div className="flex flex-wrap items-center justify-between gap-3">

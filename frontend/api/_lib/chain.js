@@ -57,6 +57,28 @@ export function explain(error) {
   return { code: 'Internal', message: 'Something went wrong on our side.' }
 }
 
+const MIRROR = env.MIRROR_NODE_URL || 'https://testnet.mirrornode.hedera.com'
+
+/**
+ * Hashio's eth_getTransactionReceipt can lag the network by tens of seconds,
+ * while Hedera's mirror node usually knows within a couple. Poll both and take
+ * whichever answers first.
+ */
+async function confirm(hash, timeoutMs = 60_000) {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const [rpc, mirror] = await Promise.allSettled([
+      publicClient.getTransactionReceipt({ hash }),
+      fetch(`${MIRROR}/api/v1/contracts/results/${hash}`).then((r) => (r.ok ? r.json() : null)),
+    ])
+    if (rpc.status === 'fulfilled' && rpc.value) return rpc.value.status
+    const m = mirror.status === 'fulfilled' ? mirror.value : null
+    if (m?.result) return m.result === 'SUCCESS' ? 'success' : 'reverted'
+    await new Promise((r) => setTimeout(r, 1500))
+  }
+  throw new ApiError(504, 'Pending', 'The network is slow to confirm. Your action was submitted; refresh in a minute.')
+}
+
 /**
  * Simulate (so reverts surface as readable errors before any gas is spent),
  * send from the attestor and wait for the receipt. Retries once on a nonce
@@ -80,9 +102,9 @@ export async function sendAsAttestor(contract, functionName, args) {
   for (let attempt = 0; ; attempt++) {
     try {
       const hash = await walletClient.writeContract(request)
-      const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 45_000 })
-      if (receipt.status !== 'success') throw new ApiError(502, 'Reverted', 'The transaction reverted on-chain.')
-      return { hash, result, receipt }
+      const status = await confirm(hash)
+      if (status !== 'success') throw new ApiError(502, 'Reverted', 'The transaction reverted on-chain.')
+      return { hash, result }
     } catch (error) {
       const nonceRace = /nonce|replacement transaction|already known/i.test(error?.message ?? '')
       if (nonceRace && attempt < 2) continue

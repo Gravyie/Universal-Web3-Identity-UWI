@@ -1,7 +1,8 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAccount } from 'wagmi'
 import { motion } from 'motion/react'
-import { ArrowRight, DownloadSimple, Door, Plus, ShareNetwork } from '@phosphor-icons/react'
+import { ArrowRight, CheckCircle, Circle, DownloadSimple, Door, Plus, ShareNetwork } from '@phosphor-icons/react'
 import { Button } from '../../components/ui/Button'
 import { EmptyState, Skeleton } from '../../components/ui/primitives'
 import { HoloCard } from '../../components/holo/HoloCard'
@@ -11,6 +12,7 @@ import { useCredential, useStats } from '../../hooks/useCredential'
 import { useMyGates } from '../../hooks/useGates'
 import { useCardActions } from '../../hooks/useCardActions'
 import { formatNumber } from '../../lib/format'
+import { readJSON, writeJSON } from '../../lib/storage'
 import { easeOutExpo } from '../../lib/motion'
 
 export default function Overview() {
@@ -40,6 +42,11 @@ function PageHeader({ title, body, actions }) {
 function Verified({ credential, address }) {
   const cardRef = useRef(null)
   const { save, share, saving } = useCardActions(cardRef, credential.username)
+  const [shared, setShared] = useState(() => readJSON(`uwi:shared:${address}`, false))
+  const markShared = () => {
+    setShared(true)
+    writeJSON(`uwi:shared:${address}`, true)
+  }
   const { created, joined, isLoading } = useMyGates(address)
   const { humans, gates } = useStats()
   const recent = [...created.map((g) => ({ ...g, mine: true })), ...joined].slice(0, 4)
@@ -67,7 +74,14 @@ function Verified({ credential, address }) {
             proof={credential.proof}
           />
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" onClick={share}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                markShared()
+                share()
+              }}
+            >
               <ShareNetwork className="size-4" /> Share profile
             </Button>
             <Button variant="ghost" size="sm" onClick={save} loading={saving}>
@@ -80,20 +94,17 @@ function Verified({ credential, address }) {
         </motion.div>
       </div>
 
-      <div className="mt-12 grid gap-4 sm:grid-cols-3">
-        {[
-          ['Gates you run', created.length],
-          ['Gates you joined', joined.length],
-          ['Verified humans on UWI', humans !== undefined ? formatNumber(Number(humans)) : null],
-        ].map(([k, v]) => (
-          <div key={k} className="rounded-[20px] border border-line bg-surface p-5">
-            <div className="text-sm text-muted">{k}</div>
-            <div className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-ink tabular-nums">
-              {v ?? <Skeleton className="mt-1 h-7 w-12" />}
-            </div>
-          </div>
-        ))}
-      </div>
+      <SetupChecklist
+        credential={credential}
+        created={created.length}
+        joined={joined.length}
+        onShare={() => {
+          markShared()
+          share()
+        }}
+        shared={shared}
+        humans={humans}
+      />
 
       <div className="mt-12">
         <div className="flex items-center justify-between">
@@ -156,5 +167,72 @@ function OverviewSkeleton() {
         <Skeleton className="h-72 rounded-[20px]" />
       </div>
     </div>
+  )
+}
+
+/** The few things that make UWI useful, with real completion state. Hidden once done. */
+function SetupChecklist({ credential, created, joined, shared, onShare, humans }) {
+  const items = [
+    { done: true, title: 'Get verified', body: `You hold credential No. ${credential.tokenId}.` },
+    {
+      done: credential.proof === 'self',
+      title: 'Back it with a passport proof',
+      body: 'Demo credentials fail strict checks. Revoke it in Settings, then verify with Self.',
+      action: <Link to="/app/settings" className="text-sm font-medium text-accent hover:underline">Settings</Link>,
+    },
+    {
+      done: created > 0,
+      title: 'Create your first gate',
+      body: 'A list that admits each verified human once.',
+      action: <Link to="/app/gates?new=1" className="text-sm font-medium text-accent hover:underline">Create</Link>,
+    },
+    {
+      done: joined > 0,
+      title: 'Join a gate',
+      body: 'When a project shares a UWI gate link, joining takes one signature.',
+    },
+    {
+      done: shared,
+      title: 'Share your profile',
+      body: 'Let others check you are a verified human.',
+      action: <button type="button" onClick={onShare} className="text-sm font-medium text-accent hover:underline">Share</button>,
+    },
+  ]
+  const doneCount = items.filter((i) => i.done).length
+  if (doneCount === items.length) return null
+
+  return (
+    <section className="mt-12 rounded-[20px] border border-line bg-surface">
+      <div className="flex items-center justify-between gap-4 p-5">
+        <div>
+          <h2 className="font-medium text-ink">Get set up</h2>
+          <p className="mt-0.5 text-sm text-muted">
+            {doneCount} of {items.length} done
+            {humans !== undefined && ` · ${formatNumber(Number(humans))} verified humans on UWI`}
+          </p>
+        </div>
+        <div className="flex gap-1" aria-hidden="true">
+          {items.map((it, i) => (
+            <span key={i} className={`h-1.5 w-6 rounded-full ${it.done ? 'bg-accent' : 'bg-line-strong'}`} />
+          ))}
+        </div>
+      </div>
+      <ul className="divide-y divide-line border-t border-line">
+        {items.map((it) => (
+          <li key={it.title} className="flex items-center gap-4 px-5 py-3.5">
+            {it.done ? (
+              <CheckCircle weight="fill" className="size-5 shrink-0 text-accent" aria-label="Done" />
+            ) : (
+              <Circle className="size-5 shrink-0 text-muted" aria-label="To do" />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className={`text-sm font-medium ${it.done ? 'text-muted line-through' : 'text-ink'}`}>{it.title}</p>
+              {!it.done && <p className="text-[13px] text-ink-2">{it.body}</p>}
+            </div>
+            {!it.done && it.action}
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }

@@ -1,47 +1,51 @@
-# UWI — frontend
+# UWI frontend and API
 
-React + Vite + Tailwind v4 app for Universal Web3 Identity: connect a wallet, pick a username, prove personhood with Self, and mint a soulbound credential on Hedera testnet.
+React 18, Vite, Tailwind v4, wagmi with Reown AppKit, Radix primitives, Motion. The `api/` folder holds the serverless functions (attestor, relayer, public REST API). On Vercel they deploy as functions; in development `npm run dev` serves them through `dev/api-plugin.js`.
 
 ## Run it
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill in the values below
-npm run dev
+cp .env.example .env.local   # fill in the values below
+npm run dev                  # app and /api on http://localhost:5173
 ```
 
-| Variable | What it's for |
+| Variable | Where | What |
+| --- | --- | --- |
+| `VITE_REOWN_PROJECT_ID` | client | Reown project for the wallet modal. Allowlist your domains in the Reown dashboard. |
+| `VITE_REGISTRY_ADDRESS`, `VITE_GATES_ADDRESS` | both | Contract addresses on Hedera testnet. |
+| `ATTESTOR_PRIVATE_KEY` | **server only** | Key with the attestor role. Pays all gas, so keep it funded with HBAR. Never prefix with `VITE_`. |
+| `VITE_SELF_ENDPOINT` | both | Public URL of `api/self.js`, e.g. `https://your-app.vercel.app/api/self`. Empty disables passport verification. Self's relayer calls it, so it can't be localhost. |
+| `VITE_SELF_ENDPOINT_TYPE` | both | `staging_https` accepts Self mock passports, `https` real ones. |
+| `VITE_SELF_SCOPE` | both | Self scope, at most 31 ASCII characters. |
+| `DEMO_ISSUANCE` | server | `false` turns off demo credentials. |
+| `RPC_URL`, `MIRROR_NODE_URL` | server | Optional overrides for Hashio and the Hedera mirror node. |
+
+## API
+
+| Route | |
 | --- | --- |
-| `VITE_REOWN_PROJECT_ID` | Reown AppKit project (wallet modal, WalletConnect). Add your domains to its allowlist. |
-| `VITE_UWI_CONTRACT_ADDRESS` | `UniversalWebIdentity` on Hedera testnet (chain 296). |
-| `VITE_SELF_ENDPOINT` | Public https URL of `api/verify.js`, e.g. `https://your-app.vercel.app/api/verify`. Empty → demo verification only. |
-| `VITE_SELF_ENDPOINT_TYPE` | `staging_https` (accepts Self mock passports) or `https` (real documents). |
-| `VITE_SELF_SCOPE` | Self scope, ≤31 ASCII chars. Must be identical on frontend and backend. |
-| `VITE_ALLOW_DEMO_VERIFY` | `true` shows "Simulate proof" in production builds. Always on in dev and when no endpoint is set. |
+| `GET /api/v1/humans/:id` | Address or username: verified, proof type, token, dates |
+| `GET /api/v1/gates/:id` | Gate and members; `?format=csv` downloads |
+| `GET /api/status` | Contracts, relayer health, enabled verification paths |
+| `POST /api/self` | Called by Self's relayer with the proof |
+| `POST /api/demo` | Signed request for a testnet demo credential |
+| `POST /api/relay` | Signed `join`, `createGate`, `closeGate`, `revoke` |
 
-Self's relayer calls `VITE_SELF_ENDPOINT` directly, so it can't be `localhost`. During development, deploy once to Vercel or run an ngrok tunnel.
-
-## Deploy
-
-Built for Vercel: `vercel.json` handles SPA routing, and `api/verify.js` becomes the Self verification function. Set the same env vars in the Vercel project.
-
-## Contract
-
-Hedera testnet gets wiped from time to time. If the app shows the "No UWI contract found" banner, redeploy from `../contracts`:
-
-```bash
-forge script script/Deploy.s.sol --rpc-url https://testnet.hashio.io/api --broadcast
-```
-
-Then update `VITE_UWI_CONTRACT_ADDRESS`.
+Errors are always `{ error: { code, message } }`. Hedera notes baked into `api/_lib/chain.js`: transactions are legacy-priced from `eth_gasPrice`, gas estimates get a 1.5x margin (Hedera ignores storage refunds when estimating), and confirmations poll both Hashio and the mirror node.
 
 ## Layout
 
 ```
-api/verify.js            Self backend verifier (Vercel function)
-src/config/              wagmi/AppKit, contract ABI + address, Self settings
-src/theme/               Ink/Paper modes × four accents, synced into the wallet modal
-src/components/          IdentityCard, Guilloche, header, UI primitives
-src/pages/               Home, Create (+ create/ steps), Credential, Lookup
-src/hooks/useIdentity.js contract reads for a wallet's credential
+api/                  serverless functions (Vercel)
+dev/api-plugin.js     serves api/ during `npm run dev`
+src/config/           chain, ABIs and EIP-712 types (shared with api/), AppKit, Self
+src/components/holo/  holographic card: engine, CSS layer stack, generated print
+src/components/       UI kit (Radix-based), layout shells, diagrams, chart
+src/hooks/            contract reads, gasless actions, gate data
+src/pages/            landing, onboarding, profile, gate join, developers, app/*
 ```
+
+## Deploy
+
+Vercel, with this folder as the project root. `vercel.json` routes everything except `/api` to the SPA. Set the variables above in the Vercel project, then set `VITE_SELF_ENDPOINT` to the deployed `/api/self` URL and redeploy.
