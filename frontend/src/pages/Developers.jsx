@@ -54,7 +54,7 @@ export default function Developers() {
         ))}
       </nav>
 
-      <div className="min-w-0">
+      <div className="min-w-0 [&>section]:min-w-0">
         <section>
           <H2 id="lookup">Lookup</H2>
           <p className="mt-2 text-ink-2">Try the API against live testnet data.</p>
@@ -66,11 +66,11 @@ export default function Developers() {
           <p className="mt-2 text-ink-2">CORS-enabled and cached at the edge for a few seconds. Errors are always {'{ error: { code, message } }'}.</p>
           <div className="mt-6 divide-y divide-line rounded-[20px] border border-line bg-surface">
             {ENDPOINTS.map((e) => (
-              <div key={e.path} className="grid gap-2 p-5 md:grid-cols-[auto_260px_1fr] md:items-baseline md:gap-5">
+              <div key={e.path} className="grid gap-2 p-5 [&>*]:min-w-0 md:grid-cols-[auto_260px_1fr] md:items-baseline md:gap-5">
                 <Badge tone={e.method === 'GET' ? 'accent' : 'warn'} className="w-fit font-mono">
                   {e.method}
                 </Badge>
-                <code className="font-mono text-[13px] text-ink">{e.path}</code>
+                <code className="font-mono text-[13px] break-all text-ink">{e.path}</code>
                 <p className="text-sm text-ink-2">{e.body}</p>
               </div>
             ))}
@@ -81,7 +81,7 @@ export default function Developers() {
         <section className="mt-20">
           <H2 id="contracts">Contracts</H2>
           <p className="mt-2 text-ink-2">Deployed on {uwiChain.name} (chain {uwiChain.id}). Both are verified-source friendly and have no upgrade proxy.</p>
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="mt-6 grid gap-4 [&>*]:min-w-0 md:grid-cols-2">
             {[
               ['UWIRegistry', REGISTRY_ADDRESS, 'Soulbound credentials, one per human, with recovery and revocation.'],
               ['UWIGates', GATES_ADDRESS, 'Sybil-proof lists keyed by credential, with signature-based writes.'],
@@ -103,8 +103,8 @@ export default function Developers() {
           </div>
           <dl className="mt-6 divide-y divide-line rounded-[20px] border border-line bg-surface">
             {FUNCTIONS.map(([fn, body]) => (
-              <div key={fn} className="grid gap-1 p-5 md:grid-cols-[300px_1fr] md:gap-5">
-                <dt className="font-mono text-[13px] text-ink">{fn}</dt>
+              <div key={fn} className="grid gap-1 p-5 [&>*]:min-w-0 md:grid-cols-[300px_1fr] md:gap-5">
+                <dt className="font-mono text-[13px] break-words text-ink">{fn}</dt>
                 <dd className="text-sm text-ink-2">{body}</dd>
               </div>
             ))}
@@ -117,7 +117,7 @@ export default function Developers() {
           <p className="mt-2 max-w-2xl text-ink-2">
             Self's verifier contracts live on Celo, so UWI verifies proofs off-chain in an attestor service and records the result on Hedera.
           </p>
-          <div className="mt-10 md:mb-10">
+          <div className="mt-10 lg:mb-10">
             <SystemPipeline />
           </div>
           <div className="mt-6 flex gap-3 rounded-[20px] border border-line bg-surface p-5">
@@ -149,9 +149,9 @@ function Lookup() {
 
   return (
     <div className="mt-6">
-      <form onSubmit={submit} className="flex flex-col gap-2 sm:flex-row">
+      <form onSubmit={submit} className="flex gap-2">
         <Input
-          className="flex-1"
+          className="min-w-0 flex-1"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="0x... or username"
@@ -160,7 +160,7 @@ function Lookup() {
           autoCapitalize="off"
           prefix={<MagnifyingGlass className="size-4 text-muted" />}
         />
-        <Button type="submit" loading={lookup.isPending} className="h-11">
+        <Button type="submit" loading={lookup.isPending} className="h-11 shrink-0 px-5">
           Look up
         </Button>
       </form>
@@ -168,7 +168,7 @@ function Lookup() {
       {lookup.isError && <p className="mt-3 text-sm text-danger">{lookup.error.message}</p>}
 
       {r && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-4 grid gap-4 lg:grid-cols-2">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-4 grid gap-4 [&>*]:min-w-0 lg:grid-cols-2">
           <div className="flex items-start gap-4 rounded-[20px] border border-line bg-surface p-5">
             <div className={`grid size-10 shrink-0 place-items-center rounded-full ${r.verified ? 'bg-ok text-white' : 'bg-surface-2 text-muted'}`}>
               {r.verified ? <SealCheck weight="fill" className="size-5" /> : <UserCircleMinus className="size-5" />}

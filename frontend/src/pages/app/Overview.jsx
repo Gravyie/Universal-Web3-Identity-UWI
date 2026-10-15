@@ -1,15 +1,16 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAccount } from 'wagmi'
+import { useAppKit } from '@reown/appkit/react'
 import { motion } from 'motion/react'
-import { ArrowRight, CheckCircle, Circle, DownloadSimple, Door, Plus, ShareNetwork } from '@phosphor-icons/react'
+import { ArrowRight, CheckCircle, Circle, Code, DownloadSimple, Door, Plus, ShareNetwork, Wallet } from '@phosphor-icons/react'
 import { Button } from '../../components/ui/Button'
 import { EmptyState, Skeleton } from '../../components/ui/primitives'
 import { HoloCard } from '../../components/holo/HoloCard'
 import { GateCard } from '../../components/GateCard'
 import { CredentialDetails } from '../../components/CredentialDetails'
-import { useCredential, useStats } from '../../hooks/useCredential'
-import { useMyGates } from '../../hooks/useGates'
+import { useCredential, useServiceStatus, useStats } from '../../hooks/useCredential'
+import { gateState, useMyGates, useRecentGates } from '../../hooks/useGates'
 import { useCardActions } from '../../hooks/useCardActions'
 import { formatNumber } from '../../lib/format'
 import { readJSON, writeJSON } from '../../lib/storage'
@@ -20,8 +21,9 @@ export default function Overview() {
   const { address } = useAccount()
   const { status, credential } = useCredential(address)
 
+  if (!address) return <Welcome />
   if (status === 'loading' || status === 'idle') return <OverviewSkeleton />
-  if (status === 'none') return <NotVerified />
+  if (status === 'none') return <Welcome connected />
   if (status === 'error') {
     return <EmptyState title="Couldn't reach Hedera" body="The network didn't respond. Refresh to try again." />
   }
@@ -132,20 +134,132 @@ function Verified({ credential, address }) {
   )
 }
 
-function NotVerified() {
+/**
+ * The overview for anyone without a credential yet, connected or not: what UWI
+ * is, the live state of the network, the newest gates to look at, and the one
+ * next step.
+ */
+function Welcome({ connected = false }) {
+  const { open } = useAppKit()
+  const { humans, gates } = useStats()
+  const { data: service } = useServiceStatus()
+  const { gates: recent, isLoading } = useRecentGates(12)
+  const openGates = recent.filter((g) => gateState(g) === 'open')
+  const relayer = service?.relayer
+  const stats = [
+    ['Verified humans', humans !== undefined ? formatNumber(Number(humans)) : null],
+    ['Gates', gates !== undefined ? formatNumber(Number(gates)) : null],
+    ['Gasless relayer', relayer ? (relayer.configured ? `Online · ${Number(relayer.balance ?? 0).toFixed(0)} HBAR` : 'Offline') : null],
+    ['Gas you pay', '$0'],
+  ]
+  const steps = connected
+    ? ['Pick a username', 'Scan your passport with Self', 'Use it in every app']
+    : ['Connect a wallet', 'Pick a username', 'Scan your passport with Self']
+
   return (
     <PageContainer>
-      <PageHeader title="Overview" description="Get your credential to join gates, create your own and be recognised by every app that checks UWI." />
-      <div className="grid items-center gap-10 rounded-[20px] border border-line bg-surface p-6 sm:p-10 md:grid-cols-[1fr_1.1fr]">
-        <div>
-          <h2 className="text-xl font-semibold tracking-[-0.03em] text-ink">You're not verified yet</h2>
-          <p className="mt-2 text-ink-2">Connect, pick a username and prove you're one person. About two minutes.</p>
-          <Button to="/app/verify" size="lg" className="mt-6">
-            Get verified <ArrowRight className="size-4" />
-          </Button>
+      <PageHeader
+        title={connected ? "You're not verified yet" : 'Welcome to UWI'}
+        description={
+          connected
+            ? 'Your wallet is connected. Get your credential to join gates, run your own and be recognised everywhere.'
+            : 'One private credential that proves you are a unique human, and nothing else.'
+        }
+        actions={
+          !connected && (
+            <Button variant="secondary" size="sm" onClick={() => open()}>
+              <Wallet className="size-4" /> Connect wallet
+            </Button>
+          )
+        }
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: easeOutExpo }}
+        className="grid items-center gap-10 overflow-hidden rounded-[24px] border border-line bg-surface p-6 sm:p-10 lg:grid-cols-[1.1fr_1fr]"
+      >
+        <div className="min-w-0">
+          <p className="font-mono text-[11px] tracking-[0.18em] text-muted uppercase">About two minutes</p>
+          <h2 className="mt-3 text-[clamp(1.6rem,3vw,2.25rem)] leading-[1.1] font-semibold tracking-[-0.04em] text-ink">
+            Prove you're human once.
+            <br />
+            <span className="text-ink-2">Use it everywhere.</span>
+          </h2>
+          <ol className="mt-6 grid gap-3">
+            {steps.map((s, i) => (
+              <li key={s} className="flex items-center gap-3 text-[15px] text-ink-2">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full border border-line-strong font-mono text-[11px] text-ink">{i + 1}</span>
+                {s}
+              </li>
+            ))}
+          </ol>
+          <div className="mt-8 flex flex-wrap gap-2">
+            <Button to="/app/verify" size="lg">
+              Get verified <ArrowRight className="size-4" />
+            </Button>
+            <Button to="/app/gates" variant="ghost" size="lg">
+              Explore gates
+            </Button>
+          </div>
         </div>
         <HoloCard proof="pending" className="mx-auto w-full max-w-sm" />
+      </motion.div>
+
+      <dl className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-[20px] border border-line bg-line lg:grid-cols-4">
+        {stats.map(([label, value]) => (
+          <div key={label} className="bg-surface p-5">
+            <dt className="text-xs text-muted">{label}</dt>
+            <dd className="mt-1.5 text-lg font-semibold tracking-[-0.02em] text-ink tabular-nums">
+              {value ?? <Skeleton className="h-6 w-16" />}
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="mt-12 flex items-baseline justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold tracking-[-0.03em] text-ink">Latest gates</h2>
+          <p className="mt-0.5 text-sm text-ink-2">Lists anyone verified can join, once.</p>
+        </div>
+        <Link to="/app/gates" className="inline-flex shrink-0 items-center gap-1 text-sm text-ink-2 hover:text-ink">
+          All gates <ArrowRight className="size-3.5" />
+        </Link>
       </div>
+      {isLoading ? (
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          {[0, 1].map((i) => (
+            <Skeleton key={i} className="h-36 rounded-[20px]" />
+          ))}
+        </div>
+      ) : openGates.length ? (
+        <div className="mt-4 grid gap-4 [&>*]:min-w-0 md:grid-cols-2">
+          {openGates.slice(0, 4).map((g) => (
+            <GateCard key={g.id} gate={g} to={`/g/${g.id}`} />
+          ))}
+        </div>
+      ) : (
+        <div className="mt-4 rounded-[20px] border border-dashed border-line-strong">
+          <EmptyState icon={Door} title="No open gates right now" body="Once you're verified you can run the first one: an allowlist, waitlist or vote that admits each human once." />
+        </div>
+      )}
+
+      <Link
+        to="/app/developers"
+        className="group mt-6 flex items-center justify-between gap-4 rounded-[20px] border border-line bg-surface p-5 transition-colors hover:border-line-strong"
+      >
+        <div className="flex items-center gap-4">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
+            <Code className="size-5" />
+          </span>
+          <div>
+            <p className="font-medium text-ink">Building an app?</p>
+            <p className="text-sm text-ink-2">Check any wallet with one contract call or one GET request.</p>
+          </div>
+        </div>
+        <ArrowRight className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5" />
+      </Link>
     </PageContainer>
   )
 }

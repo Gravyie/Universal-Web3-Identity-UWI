@@ -107,3 +107,27 @@ export function useMyGates(address) {
     },
   }
 }
+
+/**
+ * The newest gates on UWI, for browsing without a wallet. Gate ids run from 1
+ * to gateCount, so the newest are the highest ids. Open gates come first.
+ */
+export function useRecentGates(limit = 24) {
+  const countQ = useReadContract({ ...gates, functionName: 'gateCount', query: { refetchInterval: 30_000 } })
+  const total = countQ.data !== undefined ? Number(countQ.data) : undefined
+  const ids = Array.from({ length: Math.min(limit, total ?? 0) }, (_, i) => BigInt(total - i))
+  const details = useReadContracts({
+    contracts: ids.map((id) => ({ ...gates, functionName: 'getGate', args: [id] })),
+    query: { enabled: ids.length > 0 },
+  })
+  const list = ids
+    .map((id, i) => details.data?.[i]?.result && shapeGate(id, details.data[i].result))
+    .filter(Boolean)
+    .sort((a, b) => Number(gateState(b) === 'open') - Number(gateState(a) === 'open'))
+  return {
+    gates: list,
+    total,
+    isLoading: countQ.isLoading || (ids.length > 0 && details.isLoading),
+    isError: countQ.isError || details.isError,
+  }
+}

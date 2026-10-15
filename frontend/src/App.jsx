@@ -86,11 +86,12 @@ export default function App() {
             <Route path="app/developers" element={<Developers />} />
             <Route path="u/:handle" element={<Profile />} />
             <Route path="g/:id" element={<GateJoin />} />
+            {/* Overview, Gates and Settings are useful before a wallet connects; managing a gate is not. */}
+            <Route path="app" element={<Overview />} />
+            <Route path="app/gates" element={<Gates />} />
+            <Route path="app/settings" element={<Settings />} />
             <Route element={<RequireWallet />}>
-              <Route path="app" element={<Overview />} />
-              <Route path="app/gates" element={<Gates />} />
               <Route path="app/gates/:id" element={<GateDetail />} />
-              <Route path="app/settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Route>

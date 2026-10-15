@@ -1,4 +1,5 @@
 import { createAppKit } from '@reown/appkit/react'
+import { OptionsController } from '@reown/appkit-controllers'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { QueryClient } from '@tanstack/react-query'
 import { uwiChain } from './chain'
@@ -23,14 +24,20 @@ export const appKit = createAppKit({
     icons: [`${origin}/favicon.svg`],
   },
   features: { analytics: false, email: false, socials: false, swaps: false, onramp: false, send: false },
-  // The Coinbase SDK phones home to its own analytics on every page; Coinbase Wallet
-  // still connects as an injected or WalletConnect wallet.
+  // Coinbase's SDKs (Coinbase Wallet and Base Account) send their own analytics from
+  // every page. Coinbase Wallet still connects as an injected or WalletConnect wallet.
   enableCoinbase: false,
+  enableBaseAccount: false,
   themeVariables: {
     '--w3m-font-family': "'Geist Variable', ui-sans-serif, system-ui, sans-serif",
     '--w3m-border-radius-master': '3px',
   },
 })
+
+// AppKit 1.8 accepts enableBaseAccount but never applies it, so the Base Account
+// SDK (and its analytics) would load anyway. Set it on the options store directly,
+// before AppKit gets round to adding third-party connectors.
+OptionsController.setEnableBaseAccount(false)
 
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 1, staleTime: 10_000 } },

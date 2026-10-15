@@ -15,6 +15,7 @@ import { useGasless } from '../../hooks/useGasless'
 import { GATES_ADDRESS, REGISTRY_ADDRESS, explorer, uwiChain } from '../../config/chain'
 import { shortAddress } from '../../lib/format'
 import { PageContainer, PageHeader } from '../../components/layout/Page'
+import { ConnectPrompt } from '../../components/ConnectPrompt'
 
 function Section({ title, body, children }) {
   return (
@@ -106,6 +107,12 @@ export default function Settings() {
             </div>
           </dl>
         </Section>
+
+        {!address && (
+          <Section title="Your credential" body="Recovery and revocation for the credential on your wallet.">
+            <ConnectPrompt title="Connect to manage your credential" body="Appearance and network details above work without a wallet." />
+          </Section>
+        )}
 
         {credential && (
           <>
