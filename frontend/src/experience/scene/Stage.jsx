@@ -13,6 +13,7 @@ import { Nebula } from './Nebula'
 import { Credential } from './Credential'
 import { Portals } from './Portals'
 import { Fingerprint } from './Fingerprint'
+import { Constellation } from './Constellation'
 
 /** Tells the preloader the scene has drawn its first frame. */
 function ReadySignal() {
@@ -73,6 +74,7 @@ export default function Stage({ paused = false }) {
         <Nebula />
         <Credential />
         <Portals />
+        <Constellation />
         <EffectComposer multisampling={0} disableNormalPass>
           <Bloom mipmapBlur intensity={0.85} luminanceThreshold={0.32} luminanceSmoothing={0.2} radius={0.78} />
           {!xp.mobile && <ChromaticAberration offset={ca} radialModulation modulationOffset={0.4} />}

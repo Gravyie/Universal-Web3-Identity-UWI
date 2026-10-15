@@ -11,17 +11,19 @@ const SHOTS = [
   { p: P.problem, pos: [-4.2, 1.2, 8.2], look: [0.6, 0.2, 0], fov: 46 },
   { p: P.void, pos: [-1.2, 0.85, 9.8], look: [0.3, -0.05, 0], fov: 42 },
   { p: P.collapse, pos: [3.6, 1.4, 11.5], look: [-0.6, 0, 0], fov: 32 },
-  { p: NOVA, pos: [0, 0.3, 7.2], look: [0, 0, 0], fov: 40 },
+  // the collapse and the explosion share one point, right of centre, where the card then appears
+  { p: NOVA, pos: [-0.8, 0.0, 7.8], look: [-1.45, -0.4, 0], fov: 40 },
   { p: P.dawn, pos: [-1.0, -0.2, 6.9], look: [-1.55, -0.5, 0], fov: 40 },
   { p: P.everywhere, pos: [0, 0.75, 10.8], look: [0, -0.35, -1], fov: 44 },
-  { p: P.cta, pos: [-0.6, 1.1, 9.8], look: [-3.1, 1.0, 0], fov: 38 },
+  { p: P.cta, pos: [-2.6, 2.6, 11.5], look: [-2.9, 0.3, 0], fov: 40 },
 ]
 
 // Phones are too narrow for side-by-side framing; centre the subject and keep text below it.
 const MOBILE = {
   [P.hero]: { pos: [0, -0.6, 17.5], look: [0, -2.7, 0] },
+  [NOVA]: { pos: [0, 0.9, 9.2], look: [0, -0.5, 0] },
   [P.dawn]: { pos: [0, 0.9, 8.6], look: [0, -0.5, 0] },
-  [P.cta]: { pos: [0, 1.4, 8.6], look: [0, -0.1, 0] },
+  [P.cta]: { pos: [0, 1.6, 13.5], look: [0, -2.3, 0] },
 }
 const shot = (s) => (xp.mobile && MOBILE[s.p] ? { ...s, ...MOBILE[s.p] } : s)
 

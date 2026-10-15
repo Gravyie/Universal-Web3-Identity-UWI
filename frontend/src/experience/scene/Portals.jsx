@@ -111,10 +111,12 @@ export function Portals() {
     // the card always faces the screen, so its edges lie along the camera's right and up
     right.setFromMatrixColumn(state.camera.matrixWorld, 0)
     up.setFromMatrixColumn(state.camera.matrixWorld, 1)
+    // the app beams belong to Everywhere; they let go as the finale forms
+    const leave = 1 - smooth(seg(p, P.everywhere + 0.02, P.cta - 0.06))
     layout.forEach((l, i) => {
-      const appear = smooth(seg(p, P.dawn + 0.05 + i * 0.01, P.everywhere - 0.05 + i * 0.006))
-      const grow = smooth(seg(p, P.dawn + 0.08 + i * 0.01, P.everywhere - 0.015 + i * 0.002))
-      const lit = smooth(seg(p, P.dawn + 0.11 + i * 0.01, P.everywhere + i * 0.002))
+      const appear = smooth(seg(p, P.dawn + 0.05 + i * 0.01, P.everywhere - 0.05 + i * 0.006)) * leave
+      const grow = smooth(seg(p, P.dawn + 0.08 + i * 0.01, P.everywhere - 0.015 + i * 0.002)) * leave
+      const lit = smooth(seg(p, P.dawn + 0.11 + i * 0.01, P.everywhere + i * 0.002)) * leave
       const ring = rings.current[i]
       if (ring) {
         ring.visible = appear > 0.001

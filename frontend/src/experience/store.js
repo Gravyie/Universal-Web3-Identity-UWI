@@ -9,6 +9,7 @@ export const xp = {
   mobile: false,
   inPage: false, // true once the viewer has scrolled past the experience into the page
   revealed: false, // the preloader has lifted and the hero is on screen
+  bhScale: 0, // the black hole's current size, for lensing what passes behind it
   novaStart: 0, // when (s) the story crossed into the supernova
   card: { x: 0, y: 0.1, z: 0, halfW: 1.7, halfH: 1.07 }, // the credential's live centre and half size, in world units
 }

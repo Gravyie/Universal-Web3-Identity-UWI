@@ -5,8 +5,9 @@ import { ArrowDown, ArrowRight, Pause, Play, SpeakerHigh, SpeakerSlash } from '@
 import { CHAPTERS } from './chapters'
 import { novaTime } from './store'
 import { score } from './score'
-import { LogoMark } from '../components/Logo'
+import { LogoMark, Wordmark } from '../components/Logo'
 import { HeroProof } from './HeroVisual'
+import { useLiveStats } from '../hooks/useLiveStats'
 
 const ease = [0.16, 1, 0.3, 1]
 
@@ -57,6 +58,53 @@ function HudFrame() {
       <span className={`${corner} bottom-0 left-0 border-b border-l`} />
       <span className={`${corner} right-0 bottom-0 border-r border-b`} />
     </motion.div>
+  )
+}
+
+/** The conclusion: the call to act, over the galaxy of people already counted. */
+function Finale({ onExplore }) {
+  const { humans } = useLiveStats()
+  return (
+    <div className="absolute inset-x-0 bottom-[12vh] px-6 sm:px-10 md:top-1/2 md:bottom-auto md:-translate-y-1/2 lg:px-16">
+      <motion.p
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease }}
+        className="font-mono text-[11px] tracking-[0.2em] text-white/50 uppercase"
+      >
+        Every point of light is one person
+      </motion.p>
+      <h2 className="mt-5 max-w-xl text-[clamp(2.8rem,6.4vw,6rem)] leading-[0.94] font-semibold tracking-[-0.06em] text-white">
+        <Words text="Be counted" delay={0.1} />
+        <br />
+        <Words text="once." delay={0.3} wordClassName="bg-gradient-to-r from-[#7fe3ff] via-[#b9a6ff] to-[#ff9ad5] bg-clip-text pb-[0.1em] text-transparent" />
+      </h2>
+      <Sub delay={0.55} className="mt-5 max-w-sm">
+        {humans === undefined ? 'Join' : `Join ${humans.toLocaleString()} verified ${humans === 1 ? 'human' : 'humans'}`} on Hedera. Free, private, and about two minutes.
+      </Sub>
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.75, ease }} className="mt-9 flex flex-wrap gap-3">
+        <Link to="/app/verify" className="group inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-black transition-transform active:scale-[0.98]">
+          Get verified <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+        <button
+          type="button"
+          onClick={onExplore}
+          className="inline-flex h-12 items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-5 text-[15px] text-white backdrop-blur transition-transform hover:bg-white/10 active:scale-[0.98]"
+        >
+          Explore UWI <ArrowDown className="size-4" />
+        </button>
+      </motion.div>
+      <motion.ul
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1, delay: 1.1 }}
+        className="mt-10 flex flex-wrap gap-x-5 gap-y-2 font-mono text-[11px] tracking-[0.14em] text-white/40 uppercase"
+      >
+        <li>Passport read by Self</li>
+        <li>Zero-knowledge proof</li>
+        <li>Soulbound on Hedera</li>
+      </motion.ul>
+    </div>
   )
 }
 
@@ -173,32 +221,7 @@ function Copy({ id, onPlay, onExplore }) {
         </div>
       )
     case 'cta':
-      return (
-        <div className="absolute inset-x-0 bottom-[14vh] px-6 sm:px-10 md:top-1/2 md:bottom-auto md:-translate-y-1/2 lg:px-16">
-          <h2 className="max-w-xl text-[clamp(2.6rem,6vw,5.5rem)] leading-[0.98] font-semibold tracking-[-0.055em] text-white">
-            <Words text="Be counted" />
-            <br />
-            <Words text="once." delay={0.15} className="text-white/45" />
-          </h2>
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4, ease }}
-            className="mt-9 flex flex-wrap gap-3"
-          >
-            <Link to="/app/verify" className="group inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-black">
-              Get verified <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-            <button
-              type="button"
-              onClick={onExplore}
-              className="inline-flex h-12 items-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 text-[15px] text-white backdrop-blur hover:bg-white/10"
-            >
-              Explore UWI <ArrowDown className="size-4" />
-            </button>
-          </motion.div>
-        </div>
-      )
+      return <Finale onExplore={onExplore} />
     default:
       return null
   }
@@ -237,9 +260,9 @@ export function Overlay({ chapters, revealed, faded }) {
       />
 
       <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between gap-4 px-5 sm:px-8">
-        <Link to="/" onClick={() => goTo(0)} className="flex items-center gap-2 text-white" aria-label="UWI home">
+        <Link to="/" onClick={() => goTo(0)} className="flex items-center gap-2.5 text-white" aria-label="UWI home">
           <LogoMark className="size-5" />
-          <span className="font-semibold tracking-[-0.04em]">UWI</span>
+          <Wordmark />
         </Link>
         <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-black/25 p-1 text-sm text-white/70 backdrop-blur-xl md:flex">
           <button type="button" onClick={() => goTo(1)} className="rounded-full px-4 py-1.5 hover:text-white">

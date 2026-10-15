@@ -200,6 +200,7 @@ export function BlackHole() {
     const implode = smooth(seg(p, NOVA - 0.035, NOVA))
     const s = grow * (1 + 0.15 * smooth(seg(p, P.void, P.collapse))) * (1 - implode)
     g.visible = s > 0.002
+    xp.bhScale = g.visible ? s : 0
     if (!g.visible) return
     g.scale.setScalar(s)
     if (!xp.reduced) g.rotation.z = THREE.MathUtils.damp(g.rotation.z, xp.pointer.x * 0.04, 2, dt)

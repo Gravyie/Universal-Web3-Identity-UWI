@@ -11,7 +11,7 @@ import { Preloader } from '../experience/Preloader'
 import { score } from '../experience/score'
 import { HoloCard } from '../components/holo/HoloCard'
 import { HERO_CARD } from '../experience/heroCard'
-import { LogoMark } from '../components/Logo'
+import { LogoMark, Wordmark } from '../components/Logo'
 import { useLiveStats } from '../hooks/useLiveStats'
 import { Web3 } from '../web3/Web3'
 import { useMediaQuery } from '../hooks/useMediaQuery'
@@ -337,7 +337,7 @@ function Footer({ onTop }) {
           <div className="col-span-2 max-w-xs md:col-span-1">
             <div className="flex items-center gap-2">
               <LogoMark className="size-5" />
-              <span className="font-semibold tracking-[-0.04em]">UWI</span>
+              <Wordmark />
             </div>
             <p className="mt-3 text-sm text-white/50">Proof of personhood for Web3. Running on Hedera testnet, so credentials here are for testing.</p>
           </div>

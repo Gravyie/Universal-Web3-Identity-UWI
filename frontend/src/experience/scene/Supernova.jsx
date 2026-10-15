@@ -18,8 +18,8 @@ const SIZE = 30 // world units covered by the billboard
  *     it sweeps up gas). It is limb-brightened because sight lines graze it,
  *     and Rayleigh-Taylor instabilities break it into filaments that glow in
  *     the remnant's emission lines: hydrogen-alpha red and oxygen-III teal.
- *  4. Pulsar: the neutron star left behind, with a faint synchrotron nebula.
- *     The credential is born where it sits.
+ *  4. The remnant's heart: the credential condenses out of its glow as the
+ *     fireball fades.
  */
 const fragment = /* glsl */ `
   uniform float uTau, uTime, uCard;
@@ -81,12 +81,8 @@ const fragment = /* glsl */ `
     float edgeSoft = smoothstep(Rout * 1.01, Rout * 0.97, rho);
     col += shellCol * pow(column, 1.4) * (0.06 + ridge * 1.5 + fine * 0.8) * edgeSoft * shellOn * 1.5;
 
-    // 4. pulsar and its wind nebula
-    float pulsarOn = smoothstep(0.12, 0.3, tau) * (1.0 - uCard * 0.85);
-    float beat = 0.6 + 0.4 * pow(0.5 + 0.5 * sin(uTime * 9.0), 6.0);
-    col += vec3(0.75, 0.85, 1.0) * exp(-rho * rho / 0.004) * 4.0 * beat * pulsarOn;
-    float wisps = fbm(vec3(vPos * 2.4, uTime * 0.15));
-    col += vec3(0.45, 0.5, 1.0) * exp(-rho / 0.55) * (0.15 + wisps * 0.35) * pulsarOn * (1.0 - smoothstep(0.6, 1.0, tau));
+    // 4. the remnant's heart: a soft glow that the credential condenses out of
+    col += vec3(0.75, 0.82, 1.0) * exp(-rho * rho / 0.6) * 0.35 * smoothstep(0.1, 0.3, tau) * (1.0 - uCard);
 
     float e = max(abs(vPos.x), abs(vPos.y)) / ${(SIZE / 2).toFixed(1)};
     col *= 1.0 - smoothstep(0.75, 1.0, e);
@@ -121,7 +117,7 @@ export function Supernova() {
     mesh.current.quaternion.copy(state.camera.quaternion)
     material.uniforms.uTau.value = tau
     material.uniforms.uTime.value = state.clock.elapsedTime
-    material.uniforms.uCard.value = seg(t0, 1.7, 3.4)
+    material.uniforms.uCard.value = seg(t0, 0.9, 2.4)
   })
 
   return (

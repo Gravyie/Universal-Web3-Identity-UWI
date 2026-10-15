@@ -63,7 +63,8 @@ export function Nebula() {
     const on = xp.progress > NOVA - 0.005
     root.current.visible = on
     if (!on) return
-    const fade = smooth(seg(novaTime(), 0.5, 3.4))
+    // the nebula recedes in the finale so the galaxy of people stands out
+    const fade = smooth(seg(novaTime(), 0.5, 3.4)) * (1 - 0.65 * smooth(seg(xp.progress, P.everywhere + 0.04, P.cta)))
     root.current.traverse((o) => o.material?.uniforms?.uFade && (o.material.uniforms.uFade.value = fade))
   })
   return (

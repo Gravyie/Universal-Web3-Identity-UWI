@@ -41,6 +41,45 @@ function walletTexture() {
   return t
 }
 
+/*
+ * Gravitational lensing, applied per vertex. A wallet behind the hole is seen
+ * by light that has bent around it: each point's offset from the hole, on
+ * the plane through the hole facing the camera, is pushed outward by the
+ * lens equation r' = (r + sqrt(r^2 + 4 rE^2)) / 2. The Einstein radius rE
+ * grows with how far behind the hole the wallet is, so wallets passing
+ * behind swell into arcs that wrap over the top of the shadow and hug its
+ * edge, and are back to normal by the time they come round the front.
+ */
+function lensedMaterial(map) {
+  const m = new THREE.MeshBasicMaterial({ map, toneMapped: false, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })
+  m.userData.uniforms = { uLens: { value: new THREE.Vector3() }, uLensRE: { value: 0 } }
+  m.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, m.userData.uniforms)
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform vec3 uLens;\nuniform float uLensRE;')
+      .replace(
+        '#include <project_vertex>',
+        `vec4 mvPosition = vec4(transformed, 1.0);
+        #ifdef USE_INSTANCING
+          mvPosition = instanceMatrix * mvPosition;
+        #endif
+        mvPosition = modelViewMatrix * mvPosition;
+        float behind = uLens.z - mvPosition.z;
+        if (uLensRE > 0.0 && behind > 0.0) {
+          float k = uLens.z / mvPosition.z;
+          vec2 q = mvPosition.xy * k - uLens.xy;
+          float r = length(q);
+          float re2 = uLensRE * uLensRE * behind / (behind + 2.5);
+          float rp = 0.5 * (r + sqrt(r * r + 4.0 * re2));
+          mvPosition.xy = (uLens.xy + q * (rp / max(r, 1e-4))) / k;
+        }
+        gl_Position = projectionMatrix * mvPosition;`,
+      )
+  }
+  return m
+}
+
+const lensCenter = new THREE.Vector3()
 const tilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2 + DISK_TILT, 0, 0))
 const NORMAL = new THREE.Vector3(0, 0, 1).applyQuaternion(tilt)
 const KEPLER = 3.4 // angular speed at r = 1 world unit; falls off as r^-1.5
@@ -72,7 +111,7 @@ const base = new THREE.Color()
 export function Swarm({ count = 1800 }) {
   const mesh = useRef()
   const dummy = useMemo(() => new THREE.Object3D(), [])
-  const tex = useMemo(() => walletTexture(), [])
+  const material = useMemo(() => lensedMaterial(walletTexture()), [])
   const chips = useMemo(() => {
     const origins = printWorldPoints(count)
     return Array.from({ length: count }, (_, i) => {
@@ -114,6 +153,10 @@ export function Swarm({ count = 1800 }) {
     }
     // absent on the hero: the wallets are born out of the print as it fractures
     m.material.opacity = smooth(seg(p, 0.004, 0.04))
+    // the lens sits at the hole, in view space, and is as strong as the hole is grown
+    const lens = material.userData.uniforms
+    lens.uLens.value.copy(lensCenter.set(0, 0, 0).applyMatrix4(state.camera.matrixWorldInverse))
+    lens.uLensRE.value = 1.22 * xp.bhScale
     const crowd = smooth(seg(p, 0.03, P.problem))
     const cam = state.camera.position
 
@@ -127,7 +170,8 @@ export function Swarm({ count = 1800 }) {
       // captured onto an orbit, which decays as the hole feeds
       const capture = smooth(seg(p, P.problem + 0.015 + c.lag * 0.25, P.void - 0.012))
       const decay = smooth(seg(p, P.void + 0.03 + c.lag * 0.3, P.collapse - 0.005 + c.lag * 0.08))
-      const r = c.ro + (0.95 - c.ro) * Math.pow(decay, 1.5)
+      // inspiral: the orbit shrinks slowly at first, then plunges (r ~ (t_c - t)^(1/4))
+      const r = 0.95 + (c.ro - 0.95) * Math.pow(1 - decay, 0.42)
       const omega = KEPLER * Math.pow(r, -1.5)
       c.oang += dt * omega
       const inc = c.inc * (1 - decay)
@@ -157,14 +201,16 @@ export function Swarm({ count = 1800 }) {
 
       // speed streak: inner orbits move so fast they smear along their path
       const speed = omega * r
-      const streak = capture * Math.min(2.2, Math.max(0, speed - 1.1) * 1.4)
+      // tides pull each falling wallet into a thin stream along its orbit
+      const tide = decay * Math.min(6, Math.pow(2.6 / r, 2.2))
+      const streak = capture * Math.min(2.2, Math.max(0, speed - 1.1) * 1.4) + tide
       // shredded into the disk's gas well before the shadow's edge
       const gone = decay > 0 ? smooth(seg(r, 2.3, 1.5)) : 0
       // wallets that pass right by the lens fade rather than fill the screen
       const camDist = dummy.position.distanceTo(cam)
       const near = smooth(seg(camDist, 0.7, 2.6))
       const sz = c.size * (1 - gone) * (0.15 + 0.85 * out) * near
-      dummy.scale.set(sz * (1 + streak), sz / (1 + streak * 0.35), 1)
+      dummy.scale.set(sz * (1 + streak), sz / (1 + streak * 0.35 + tide * 0.6), 1)
       dummy.updateMatrix()
       m.setMatrixAt(i, dummy.matrix)
 
@@ -174,9 +220,9 @@ export function Swarm({ count = 1800 }) {
       const z = 1 - capture * (1 - Math.sqrt(Math.max(0, 1 - 0.385 / Math.max(r, 0.4))))
       // Doppler beaming: brighter coming toward the camera, dimmer going away
       toCam.copy(cam).sub(dummy.position).normalize()
-      const beta = capture * Math.min(0.45, speed * 0.16)
-      const D = Math.min(2.4, 1 / (1 - beta * tangent.dot(toCam)))
-      const glow = Math.pow(D, 2.2) * (capture ? 0.75 + 0.25 * z : 1) / (1 + streak * 0.5)
+      const beta = capture * Math.min(0.3, speed * 0.12)
+      const D = 1 / (1 - beta * tangent.dot(toCam))
+      const glow = Math.min(1.9, Math.pow(D, 2.2)) * (capture ? 0.75 + 0.25 * z : 1) / (1 + streak * 0.5)
       tint.setRGB(base.r * glow * z, base.g * glow * z * z, base.b * glow * z * z * z)
       m.setColorAt(i, tint)
     }
@@ -185,9 +231,9 @@ export function Swarm({ count = 1800 }) {
   })
 
   return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, count]} frustumCulled={false}>
-      <planeGeometry args={[0.22, 0.1375]} />
-      <meshBasicMaterial map={tex} toneMapped={false} transparent depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
+    <instancedMesh ref={mesh} args={[undefined, material, count]} frustumCulled={false}>
+      {/* subdivided so the lens can bend each wallet into an arc */}
+      <planeGeometry args={[0.22, 0.1375, 10, 6]} />
     </instancedMesh>
   )
 }

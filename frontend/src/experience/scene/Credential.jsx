@@ -32,7 +32,8 @@ export function Credential() {
     const node = el.current
     if (!g || !node) return
     // condenses out of the remnant on the explosion's clock
-    const born = p >= NOVA ? smooth(seg(novaTime(), 1.7, 3.4)) : 0
+    // emerges as the fireball fades, while the shell is still expanding
+    const born = p >= NOVA ? smooth(seg(novaTime(), 0.9, 2.4)) : 0
     g.visible = born > 0.001
     node.style.visibility = g.visible ? 'visible' : 'hidden'
     if (!g.visible) return
@@ -42,7 +43,7 @@ export function Credential() {
     const cam = state.camera
     const dist = cam.position.distanceTo(g.getWorldPosition(world))
     const px = (CARD_W * state.size.height) / (2 * Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * dist)
-    const w = Math.round(px * (0.12 + 0.88 * born))
+    const w = Math.round(px * (0.55 + 0.45 * born))
     if (Math.abs(w - width.current) > 0.5) {
       width.current = w
       node.style.width = `${w}px`
@@ -51,13 +52,13 @@ export function Credential() {
     xp.card.x = world.x
     xp.card.y = world.y
     xp.card.z = world.z
-    xp.card.halfW = (CARD_W * (0.12 + 0.88 * born)) / 2
+    xp.card.halfW = (CARD_W * (0.55 + 0.45 * born)) / 2
     xp.card.halfH = xp.card.halfW / 1.586
-    // it emerges out of the remnant's light: growing from a bright point, tilting up to face you
+    // it emerges out of the remnant's light: a card from the first frame, sharpening and rising to face you
     const rise = 1 - born
     node.style.transform = xp.reduced ? 'none' : `perspective(1400px) rotateX(${(rise * 22).toFixed(1)}deg) translateY(${(rise * 18).toFixed(1)}px)`
     node.style.opacity = String(born)
-    node.style.filter = born < 1 ? `blur(${((1 - born) * 16).toFixed(1)}px) brightness(${(1 + (1 - born) * 3).toFixed(2)}) saturate(${(1 - (1 - born) * 0.6).toFixed(2)})` : 'none'
+    node.style.filter = born < 1 ? `blur(${((1 - born) * 10).toFixed(1)}px) brightness(${(1 + (1 - born) * 1.6).toFixed(2)})` : 'none'
     node.style.pointerEvents = born >= 1 ? 'auto' : 'none'
   })
 

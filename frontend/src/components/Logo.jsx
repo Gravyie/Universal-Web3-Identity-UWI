@@ -15,13 +15,18 @@ export function LogoMark({ className = 'size-6' }) {
   )
 }
 
+/** The wordmark: spaced capitals, so the three letters read as a mark rather than a word. */
+export function Wordmark({ className = '' }) {
+  return <span className={`pl-[0.06em] text-[15px] leading-none font-semibold tracking-[0.17em] ${className}`}>UWI</span>
+}
+
 export function Logo({ to = '/' }) {
   return (
-    <Link to={to} className="group flex items-center gap-2" aria-label="UWI home">
+    <Link to={to} className="group flex items-center gap-2.5" aria-label="UWI home">
       <span className="text-ink transition-transform duration-700 ease-out group-hover:rotate-[120deg]">
         <LogoMark />
       </span>
-      <span className="text-[17px] font-semibold tracking-[-0.04em] text-ink">UWI</span>
+      <Wordmark className="text-ink" />
     </Link>
   )
 }
