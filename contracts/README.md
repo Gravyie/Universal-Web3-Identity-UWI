@@ -10,9 +10,15 @@ forge test                    # 18 tests
 forge fmt --check
 
 # Deploy (deployer becomes owner and, unless ATTESTOR is set, the attestor)
-cp .env.example .env          # PRIVATE_KEY of a funded testnet account
+cp .env.example .env          # PRIVATE_KEY of a funded testnet account (optional ATTESTOR)
 set -a && . ./.env && set +a
 forge script script/Deploy.s.sol --rpc-url hedera_testnet --broadcast --slow
 ```
 
-Get test HBAR from the [Hedera faucet](https://portal.hedera.com/faucet). After deploying, update `VITE_REGISTRY_ADDRESS` and `VITE_GATES_ADDRESS` in the frontend.
+Get test HBAR from the [Hedera faucet](https://portal.hedera.com/faucet). After deploying:
+
+1. Set `VITE_REGISTRY_ADDRESS` and `VITE_GATES_ADDRESS` in the frontend (and in Vercel).
+2. Set the frontend's `ATTESTOR_PRIVATE_KEY` to the attestor's key and fund that address with HBAR; it pays for every issued credential and relayed action.
+3. The owner can add or remove attestors with `setAttestor(address, bool)`.
+
+`.env` is git-ignored. Never commit a key, and treat any key that has ever been committed as compromised.
