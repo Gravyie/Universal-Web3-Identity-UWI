@@ -26,7 +26,7 @@ import { Constellation } from './Constellation'
  * GPU to finish (KHR_parallel_shader_compile, where available), then waits
  * for a few consecutive smooth frames.
  */
-function Warmup() {
+function Warmup({ toTarget }) {
   const { gl, scene, camera } = useThree()
   const smooth = useRef(-1)
   const since = useRef(0)
@@ -42,14 +42,15 @@ function Warmup() {
           hidden.push(o)
         }
       })
-      const target = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType })
+      // compile for wherever the scene really draws: the post-processing buffer, or the screen
+      const target = toTarget ? new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType }) : null
       const previous = gl.getRenderTarget()
-      gl.setRenderTarget(target)
+      if (target) gl.setRenderTarget(target)
       const compiled = gl.compileAsync(scene, camera)
       gl.setRenderTarget(previous)
       hidden.forEach((o) => (o.visible = false))
       await compiled.catch(() => {})
-      target.dispose()
+      target?.dispose()
       if (!live) return
       loading.mark('shaders')
       smooth.current = 0
@@ -59,13 +60,37 @@ function Warmup() {
       live = false
       cancelAnimationFrame(id)
     }
-  }, [gl, scene, camera])
+  }, [gl, scene, camera, toTarget])
   useFrame((_, dt) => {
     if (smooth.current < 0 || loading.has('frames')) return
     smooth.current = dt < 1 / 20 ? smooth.current + 1 : 0
     // five smooth frames in a row; a device that can't get there in 2.5s won't by waiting longer
     if (smooth.current >= 5 || performance.now() - since.current > 2500) loading.mark('frames')
   })
+  return null
+}
+
+/**
+ * Phones draw at a steady 30fps instead of chasing 60 (or 120): each frame then
+ * has twice the time to finish, so the GPU never falls behind and the browser
+ * never shows a frame it couldn't complete.
+ */
+function FrameCap({ fps = 30 }) {
+  const invalidate = useThree((s) => s.invalidate)
+  useEffect(() => {
+    let raf = 0
+    let last = 0
+    const step = 1000 / fps
+    const tick = (now) => {
+      if (now - last >= step - 2) {
+        last = now
+        invalidate()
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [invalidate, fps])
   return null
 }
 
@@ -86,15 +111,22 @@ function Space() {
 }
 
 /**
- * One persistent scene for the whole landing experience. Device pixel ratio
- * is capped (1.5 desktop, 1.25 phones) and adapts to the GPU, dropping when
- * frames slow down. Every material is lit by its own shader, so there is no
- * environment map to build.
+ * One persistent scene for the whole landing experience. Every material is lit
+ * by its own shader, so there is no environment map to build.
+ *
+ * Desktop: device pixel ratio up to 1.5, lowered when frames slow down, with
+ * bloom, chromatic aberration and vignette.
+ *
+ * Phones (lite): a fixed 1x resolution, 30fps, and no post-processing at all.
+ * Post-processing keeps a stack of full-screen half-float buffers, the largest
+ * GPU memory cost here and a format some phones handle badly; together with
+ * fill-rate spikes that is what makes mobile WebGL flash black. The heavy
+ * shaders have lighter phone variants too (see Nebula, Supernova, BlackHole).
  */
 export default function Stage() {
+  const lite = xp.mobile
   const ca = useMemo(() => new THREE.Vector2(0.0004, 0.0004), [])
-  const max = xp.mobile ? 1.25 : 1.5
-  const [dpr, setDpr] = useState(Math.min(max, window.devicePixelRatio || 1))
+  const [dpr, setDpr] = useState(Math.min(lite ? 1 : 1.5, window.devicePixelRatio || 1))
   // three.js restores a lost GPU context by itself; if it stays lost, hand over to the static page
   const [lost, setLost] = useState(false)
   if (lost) throw new Error('WebGL context lost and not restored')
@@ -110,6 +142,7 @@ export default function Stage() {
       // only real size changes resize the canvas (each resize clears it for a frame)
       resize={{ scroll: false, debounce: { scroll: 0, resize: 250 } }}
       dpr={dpr}
+      frameloop={lite ? 'demand' : 'always'}
       camera={{ position: [0, 0.6, 18], fov: 34, near: 0.1, far: 140 }}
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping }}
       onCreated={watchContext}
@@ -117,7 +150,7 @@ export default function Stage() {
       <color attach="background" args={['#020306']} />
       {/* Desktop: resolution only steps down, and gives up after a couple of changes. Phones keep
           one fixed resolution: every change reallocates the canvas, which shows as a black flash. */}
-      {!xp.mobile && <PerformanceMonitor flipflops={2} onDecline={() => setDpr((d) => Math.max(0.75, d - 0.25))} onFallback={() => setDpr(1)} />}
+      {lite ? <FrameCap /> : <PerformanceMonitor flipflops={2} onDecline={() => setDpr((d) => Math.max(0.75, d - 0.25))} onFallback={() => setDpr(1)} />}
       <Suspense fallback={null}>
         <CameraRig />
         <Fingerprint />
@@ -127,12 +160,14 @@ export default function Stage() {
         <Credential />
         <Portals />
         <Constellation />
-        <EffectComposer multisampling={0} disableNormalPass>
-          <Bloom mipmapBlur intensity={0.85} luminanceThreshold={0.32} luminanceSmoothing={0.2} radius={0.78} />
-          {!xp.mobile && <ChromaticAberration offset={ca} radialModulation modulationOffset={0.4} />}
-          <Vignette eskil={false} offset={0.25} darkness={0.75} />
-        </EffectComposer>
-        <Warmup />
+        {!lite && (
+          <EffectComposer multisampling={0} disableNormalPass>
+            <Bloom mipmapBlur intensity={0.85} luminanceThreshold={0.32} luminanceSmoothing={0.2} radius={0.78} />
+            <ChromaticAberration offset={ca} radialModulation modulationOffset={0.4} />
+            <Vignette eskil={false} offset={0.25} darkness={0.75} />
+          </EffectComposer>
+        )}
+        <Warmup toTarget={!lite} />
       </Suspense>
     </Canvas>
   )

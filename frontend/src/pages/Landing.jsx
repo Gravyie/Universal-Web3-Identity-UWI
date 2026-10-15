@@ -127,6 +127,8 @@ export default function Landing() {
         className="pointer-events-none fixed inset-0 z-10 bg-[#05040c]"
         style={{ opacity: 'calc(var(--story-dim, 0) * 0.6)' }}
       />
+      {/* phones have no post-processing, so the vignette is a plain gradient here */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[5] bg-[radial-gradient(ellipse_at_center,transparent_55%,rgb(0_0_0/0.55))] md:hidden" />
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-[35] hidden opacity-[0.07] mix-blend-overlay md:block"

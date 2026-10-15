@@ -16,6 +16,100 @@ const CLOUDS = [
   { pos: [0, 0, -1.5], size: 9, a: '#9fe8ff', b: '#ff9ad5', seed: 5.5 },
 ]
 
+// ── Phones: the same clouds, computed once into small textures ───────────────
+// The live shader costs ~15 noise samples per pixel per cloud, every frame, on
+// overlapping full-screen planes; on a phone GPU that is the heaviest thing in
+// the story. These are the same formulas, run once on the CPU at load.
+const hash = (x, y) => {
+  const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453
+  return s - Math.floor(s)
+}
+function noise(x, y) {
+  const ix = Math.floor(x)
+  const iy = Math.floor(y)
+  const fx = x - ix
+  const fy = y - iy
+  const ux = fx * fx * (3 - 2 * fx)
+  const uy = fy * fy * (3 - 2 * fy)
+  const a = hash(ix, iy)
+  const b = hash(ix + 1, iy)
+  const c = hash(ix, iy + 1)
+  const d = hash(ix + 1, iy + 1)
+  return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy
+}
+function fbm(x, y) {
+  let v = 0
+  let a = 0.5
+  for (let i = 0; i < 5; i++) {
+    v += a * noise(x, y)
+    x *= 2.03
+    y *= 2.03
+    a *= 0.5
+  }
+  return v
+}
+const smoothstep = (e0, e1, x) => {
+  const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)))
+  return t * t * (3 - 2 * t)
+}
+function bakeCloud(c, size = 112) {
+  const A = new THREE.Color(c.a)
+  const B = new THREE.Color(c.b)
+  const data = new Uint8Array(size * size * 4)
+  for (let j = 0; j < size; j++) {
+    for (let i = 0; i < size; i++) {
+      const u = i / (size - 1)
+      const v = j / (size - 1)
+      const px = (u - 0.5) * 3 + c.seed
+      const py = (v - 0.5) * 3 + c.seed
+      const qx = fbm(px, py)
+      const qy = fbm(px + 5.2, py + 1.3)
+      const n = fbm(px + 2.5 * qx, py + 2.5 * qy)
+      const d = Math.hypot(u - 0.5, v - 0.5) * 2
+      const mask = smoothstep(1, 0.15, d) * smoothstep(0.35, 0.85, n)
+      const k = smoothstep(0.4, 0.9, n + qx * 0.4)
+      const glow = Math.pow(smoothstep(0.75, 1, n), 3) * 0.8
+      const o = (j * size + i) * 4
+      data[o] = Math.min(255, ((B.r + (A.r - B.r) * k + glow) * mask * 0.9 * 255) | 0)
+      data[o + 1] = Math.min(255, ((B.g + (A.g - B.g) * k + glow * 0.9) * mask * 0.9 * 255) | 0)
+      data[o + 2] = Math.min(255, ((B.b + (A.b - B.b) * k + glow * 0.95) * mask * 0.9 * 255) | 0)
+      data[o + 3] = 255
+    }
+  }
+  const tex = new THREE.DataTexture(data, size, size)
+  tex.magFilter = THREE.LinearFilter
+  tex.minFilter = THREE.LinearFilter
+  tex.needsUpdate = true
+  return tex
+}
+
+/** A baked cloud: the texture drawn as-is (no colour conversion), like the live shader. */
+function BakedCloud({ c }) {
+  const ref = useRef()
+  const mat = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        uniforms: { uMap: { value: bakeCloud(c) }, uFade: { value: 0 } },
+        vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+        fragmentShader: `uniform sampler2D uMap; uniform float uFade; varying vec2 vUv; void main(){ gl_FragColor = vec4(texture2D(uMap, vUv).rgb * uFade, 1.0); }`,
+      }),
+    [c],
+  )
+  useFrame((state) => {
+    ref.current.quaternion.copy(state.camera.quaternion)
+    // a slow turn stands in for the live shader's drift
+    ref.current.rotateZ(state.clock.elapsedTime * 0.006 * (c.seed > 5 ? 1 : -1))
+  })
+  return (
+    <mesh ref={ref} position={c.pos} material={mat}>
+      <planeGeometry args={[c.size, c.size]} />
+    </mesh>
+  )
+}
+
 function Cloud({ c }) {
   const ref = useRef()
   const mat = useMemo(
@@ -69,9 +163,7 @@ export function Nebula() {
   })
   return (
     <group ref={root} visible={false}>
-      {CLOUDS.map((c) => (
-        <Cloud key={c.seed} c={c} />
-      ))}
+      {CLOUDS.map((c) => (xp.mobile ? <BakedCloud key={c.seed} c={c} /> : <Cloud key={c.seed} c={c} />))}
       <Sparkles count={xp.mobile ? 200 : 500} scale={[30, 18, 20]} position={[0, 0, -4]} size={2.4} speed={0.2} opacity={0.9} color="#ffe6f6" />
     </group>
   )

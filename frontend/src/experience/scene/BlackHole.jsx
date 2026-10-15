@@ -179,7 +179,7 @@ export function BlackHole() {
       new THREE.ShaderMaterial({
         uniforms: { uInv: { value: new THREE.Matrix4() }, uCam: { value: new THREE.Vector3() }, uTime: { value: 0 }, uIntensity: { value: 1 }, uDrain: { value: 0 } },
         vertexShader: vertex,
-        fragmentShader: fragment(xp.mobile ? 110 : 170),
+        fragmentShader: fragment(xp.mobile ? 76 : 170),
         transparent: true,
         depthWrite: false,
         depthTest: false,

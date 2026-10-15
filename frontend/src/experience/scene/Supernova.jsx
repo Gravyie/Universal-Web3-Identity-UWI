@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { novaTime } from '../store'
+import { novaTime, xp } from '../store'
 import { seg } from '../chapters'
 
 const SIZE = 30 // world units covered by the billboard
@@ -22,6 +22,9 @@ const SIZE = 30 // world units covered by the billboard
  *     fireball fades.
  */
 const fragment = /* glsl */ `
+  #ifndef OCTAVES
+  #define OCTAVES 5
+  #endif
   uniform float uTau, uTime, uCard;
   varying vec2 vPos;
 
@@ -31,7 +34,7 @@ const fragment = /* glsl */ `
     return mix(mix(mix(hash(i), hash(i + vec3(1, 0, 0)), f.x), mix(hash(i + vec3(0, 1, 0)), hash(i + vec3(1, 1, 0)), f.x), f.y),
                mix(mix(hash(i + vec3(0, 0, 1)), hash(i + vec3(1, 0, 1)), f.x), mix(hash(i + vec3(0, 1, 1)), hash(i + vec3(1, 1, 1)), f.x), f.y), f.z);
   }
-  float fbm(vec3 p) { float v = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { v += a * noise(p); p = p * 2.03 + 7.1; a *= 0.5; } return v; }
+  float fbm(vec3 p) { float v = 0.0, a = 0.5; for (int i = 0; i < OCTAVES; i++) { v += a * noise(p); p = p * 2.03 + 7.1; a *= 0.5; } return v; }
 
   vec3 blackbody(float k) {
     float t = clamp(k, 1000.0, 40000.0) / 100.0;
@@ -71,7 +74,11 @@ const fragment = /* glsl */ `
     // ridged noise: thin filaments, not clouds
     float fil = fbm(n * 5.0 + vec3(0.0, 0.0, tau * 2.0));
     float ridge = pow(1.0 - abs(fil * 2.0 - 1.0), 7.0);
+    #ifdef LITE
+    float fine = 0.0;
+    #else
     float fine = pow(1.0 - abs(fbm(n * 13.0 + 3.0) * 2.0 - 1.0), 9.0);
+    #endif
     float lines = fbm(n * 2.2 + 11.0);
     vec3 halpha = vec3(1.0, 0.22, 0.42);
     vec3 oiii = vec3(0.2, 0.85, 0.95);
@@ -97,6 +104,8 @@ export function Supernova() {
       new THREE.ShaderMaterial({
         uniforms: { uTau: { value: 0 }, uTime: { value: 0 }, uCard: { value: 0 } },
         vertexShader: `varying vec2 vPos; void main(){ vPos = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        // phones: three noise octaves instead of five, and no fine-filament pass
+        defines: xp.mobile ? { OCTAVES: 3, LITE: 1 } : {},
         fragmentShader: fragment,
         transparent: true,
         depthWrite: false,
