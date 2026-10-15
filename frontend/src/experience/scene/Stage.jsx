@@ -14,6 +14,17 @@ import { Credential } from './Credential'
 import { Portals } from './Portals'
 import { Fingerprint } from './Fingerprint'
 
+/** Tells the preloader the scene has drawn its first frame. */
+function ReadySignal() {
+  const sent = useRef(false)
+  useFrame(() => {
+    if (sent.current) return
+    sent.current = true
+    requestAnimationFrame(() => window.dispatchEvent(new Event('uwi:ready')))
+  })
+  return null
+}
+
 /** Deep space, visible until the supernova. */
 function Space() {
   const ref = useRef()
@@ -55,6 +66,7 @@ export default function Stage({ paused = false }) {
           <Lightformer form="ring" intensity={3} color="#7f8cff" position={[0, 4, -5]} scale={6} />
         </Environment>
         <CameraRig />
+        <ReadySignal />
         <Fingerprint />
         <Space />
         <Supernova />

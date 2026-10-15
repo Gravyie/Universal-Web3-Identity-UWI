@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { xp } from '../store'
 import { NOVA, P, seg } from '../chapters'
 
-const SIZE = 22 // world units covered by the billboard
+const SIZE = 30 // world units covered by the billboard
 
 /*
  * A core-collapse supernova, in the order it really happens, drawn in one
@@ -48,20 +48,20 @@ const fragment = /* glsl */ `
 
     // 1. shock breakout
     float flash = exp(-tau * 45.0) * smoothstep(0.0, 0.006, tau);
-    col += blackbody(30000.0) * flash * (exp(-rho * rho / 0.05) * 14.0 + exp(-rho / 0.9) * 1.6);
+    col += blackbody(30000.0) * flash * (exp(-rho * rho / 0.05) * 14.0 + exp(-rho / 2.2) * 2.4);
 
     // 2. fireball photosphere
-    float Rf = 0.08 + 0.7 * pow(tau, 0.55);
+    float Rf = 0.1 + 1.7 * pow(tau, 0.5);
     float x = rho / Rf;
     float mu = sqrt(max(1.0 - x * x, 0.0));
     float limb = 0.35 + 0.65 * mu;
     float gran = 0.85 + 0.3 * fbm(vec3(vPos / Rf * 3.0, uTime * 0.4));
-    float L = smoothstep(0.0, 0.02, tau) * (1.0 - smoothstep(0.05, 0.28, tau));
+    float L = smoothstep(0.0, 0.02, tau) * (1.0 - smoothstep(0.06, 0.36, tau));
     float temp = mix(26000.0, 3200.0, smoothstep(0.0, 0.45, tau));
     col += blackbody(temp) * limb * gran * smoothstep(1.02, 0.9, x) * L * 1.6;
 
     // 3. ejecta shell with Rayleigh-Taylor filaments
-    float Rs = 0.25 + 4.2 * pow(tau, 0.75);
+    float Rs = 0.3 + 12.5 * pow(tau, 0.72);
     vec3 n = vec3(vPos, sqrt(max(Rs * Rs - rho * rho, 0.0))) / Rs;
     float rt = fbm(n * 3.2 + 1.7);
     float Rout = Rs * (1.0 + 0.16 * (rt - 0.5));
@@ -77,7 +77,7 @@ const fragment = /* glsl */ `
     vec3 oiii = vec3(0.2, 0.85, 0.95);
     vec3 emission = mix(halpha, oiii, smoothstep(0.35, 0.65, lines));
     vec3 shellCol = mix(blackbody(mix(14000.0, 6000.0, tau)) * 1.2, emission, smoothstep(0.08, 0.4, tau));
-    float shellOn = smoothstep(0.015, 0.08, tau) * (1.0 - smoothstep(0.3, 0.8, tau)) * (1.0 - uCard * 0.6);
+    float shellOn = smoothstep(0.015, 0.08, tau) * (1.0 - smoothstep(0.5, 0.95, tau)) * (1.0 - uCard * 0.5);
     float edgeSoft = smoothstep(Rout * 1.01, Rout * 0.97, rho);
     col += shellCol * pow(column, 1.4) * (0.06 + ridge * 1.5 + fine * 0.8) * edgeSoft * shellOn * 1.5;
 

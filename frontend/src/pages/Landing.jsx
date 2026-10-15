@@ -7,6 +7,7 @@ import { ArrowRight, ArrowUp, ArrowUpRight, Code, DeviceMobile, Door, Fingerprin
 import { xp } from '../experience/store'
 import { useChapters } from '../experience/useChapters'
 import { Overlay } from '../experience/Overlay'
+import { Preloader } from '../experience/Preloader'
 import { score } from '../experience/score'
 import { HoloCard } from '../components/holo/HoloCard'
 import { HERO_CARD } from '../experience/heroCard'
@@ -40,6 +41,11 @@ export default function Landing() {
   xp.reduced = Boolean(reduce)
   xp.mobile = mobile
   const chapters = useChapters()
+  const [revealed, setRevealed] = useState(xp.revealed)
+  const reveal = () => {
+    xp.revealed = true
+    setRevealed(true)
+  }
 
   useEffect(() => {
     const onMove = (e) => {
@@ -72,7 +78,8 @@ export default function Landing() {
             "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
         }}
       />
-      <Overlay chapters={chapters} />
+      {!revealed && <Preloader onDone={reveal} />}
+      <Overlay chapters={chapters} revealed={revealed} />
 
       {/* The experience occupies the first screen; the page follows it. */}
       <div className="h-dvh" aria-hidden="true" />

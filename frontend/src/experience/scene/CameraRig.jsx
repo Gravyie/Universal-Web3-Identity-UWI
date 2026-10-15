@@ -7,23 +7,20 @@ import { NOVA, P, easeInOut, seg } from '../chapters'
 // Where the lens sits at each chapter. The controller eases progress between
 // chapters, so each swipe is one camera move between two of these marks.
 const SHOTS = [
-  { p: P.hero, pos: [0, 0.6, 18], look: [-3, 0, 0], fov: 34 },
-  { p: P.many, pos: [-5, 1.6, 9.5], look: [0.5, 0, 0], fov: 42 },
-  { p: P.farmed, pos: [4, -1, 7], look: [0, 0.3, 0], fov: 44 },
+  { p: P.hero, pos: [0, 0.2, 17], look: [0, 0.2, 0], fov: 34 },
+  { p: P.problem, pos: [-4.2, 1.2, 8.2], look: [0.6, 0.2, 0], fov: 46 },
   { p: P.void, pos: [0, 1.5, 12.5], look: [0, 0, 0], fov: 32 },
   { p: P.collapse, pos: [3.6, 1.4, 11.5], look: [-0.6, 0, 0], fov: 32 },
-  { p: NOVA, pos: [0, 0.4, 9], look: [0, 0, 0], fov: 36 },
-  { p: P.dawn, pos: [-0.6, 0.0, 10.5], look: [-1.9, -0.9, -2], fov: 44 },
-  { p: P.card, pos: [1.1, 0.4, 7.2], look: [1.5, 0.1, 0], fov: 34 },
-  { p: P.everywhere, pos: [0, 1.4, 12.5], look: [0, 0.35, -1], fov: 44 },
+  { p: NOVA, pos: [0, 0.3, 7.2], look: [0, 0, 0], fov: 40 },
+  { p: P.dawn, pos: [-1.0, -0.2, 6.9], look: [-1.55, -0.5, 0], fov: 40 },
+  { p: P.everywhere, pos: [0, 0.75, 10.8], look: [0, -0.35, -1], fov: 44 },
   { p: P.cta, pos: [-0.6, 1.1, 9.8], look: [-3.1, 1.0, 0], fov: 38 },
 ]
 
-// Phones are too narrow for side-by-side framing; centre the card and keep text below it.
+// Phones are too narrow for side-by-side framing; centre the subject and keep text below it.
 const MOBILE = {
-  [P.hero]: { pos: [1.1, -1.6, 21], look: [1.1, -4.7, 0] },
-  [P.dawn]: { pos: [0, 0.9, 10], look: [0, -0.5, -2] },
-  [P.card]: { pos: [0, 1.3, 7.2], look: [0, -0.2, 0] },
+  [P.hero]: { pos: [0, -0.6, 17.5], look: [0, -2.7, 0] },
+  [P.dawn]: { pos: [0, 0.9, 8.6], look: [0, -0.5, 0] },
   [P.cta]: { pos: [0, 1.4, 8.6], look: [0, -0.1, 0] },
 }
 const shot = (s) => (xp.mobile && MOBILE[s.p] ? { ...s, ...MOBILE[s.p] } : s)

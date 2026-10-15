@@ -10,13 +10,11 @@ export function createWheelIntent() {
   let lastT = -1e9
   let locked = false
   let lockDir = 0
-  let needPause = false // the current gesture is spent; only a fresh one counts
   const recent = []
   const avg = (a) => a.reduce((x, y) => x + y, 0) / a.length
 
   const isIntent = (mag, gap) => {
     if (gap > 160) return true
-    if (needPause) return false
     if (recent.length < 8 || mag < 6) return false
     // inertia decays; intent holds steady or grows
     return avg([...recent.slice(-3), mag]) >= avg(recent.slice(-7, -3))
@@ -30,7 +28,6 @@ export function createWheelIntent() {
     feed(dy, now, settled) {
       const gap = now - lastT
       lastT = now
-      if (gap > 160) needPause = false
       const mag = Math.abs(dy)
       const intent = isIntent(mag, gap)
       recent.push(mag)
@@ -57,12 +54,6 @@ export function createWheelIntent() {
       locked = true
       lockDir = dir
       acc = 0
-    },
-    /** End the current gesture: nothing more from it, however steady, until a pause. */
-    spend(dir) {
-      this.lock(dir)
-      needPause = true
-      lastT = Infinity // the next event continues this gesture, it is not a fresh one
     },
     reset() {
       acc = 0

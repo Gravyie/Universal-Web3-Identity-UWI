@@ -4,11 +4,9 @@ import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { xp } from '../store'
 import { P, seg, smooth } from '../chapters'
-import { ridgePoint, ridgesFor } from '../../components/holo/print'
-import { HERO_CARD } from '../heroCard'
+import { PRINT_HEIGHT as HEIGHT, PRINT_POS, samplePrint } from './printGeometry'
+import { Reticle } from './Reticle'
 
-const PRINT_POS = [1.1, 0.25, 0]
-const HEIGHT = 6.2 // world units
 const SCAN_PERIOD = 7 // seconds per verification cycle
 
 /*
@@ -56,7 +54,7 @@ const vertex = /* glsl */ `
     float size = uSize * (0.55 + aSeed * 0.9) * (1.0 + beat * 0.8 + near * 1.2 + scan * 0.6);
     gl_PointSize = size * uScale / -mv.z;
 
-    vGlow = 0.13 + run * 0.5 + beat * 1.1 + scan * 0.8 + near * 0.9;
+    vGlow = 0.075 + run * 0.3 + beat * 0.75 + scan * 0.55 + near * 0.7;
     vHue = atan(position.y, position.x) / 6.2831 + aRidge * 0.35 + uTime * 0.03;
     vAlpha = (0.25 + 0.75 * f) * (1.0 - uBurst * 0.9);
   }
@@ -77,50 +75,22 @@ const fragment = /* glsl */ `
 `
 
 function buildPrint(count) {
-  const print = ridgesFor(HERO_CARD.address)
-  const k = HEIGHT / 116
-  const twist = (-print.twist * Math.PI) / 180
-  const cos = Math.cos(twist)
-  const sin = Math.sin(twist)
-  // points per ridge in proportion to its length
-  const lengths = print.ridges.map((r) => r.r * (Math.PI * 2 - r.gap))
-  const total = lengths.reduce((a, b) => a + b, 0)
-  const position = new Float32Array(count * 3)
+  const { position, u, ridge, radius } = samplePrint(count)
   const scatter = new Float32Array(count * 3)
-  const u = new Float32Array(count)
-  const ridge = new Float32Array(count)
   const seed = new Float32Array(count)
   const v = new THREE.Vector3()
-  let n = 0
-  print.ridges.forEach((rd, ri) => {
-    const m = ri === print.ridges.length - 1 ? count - n : Math.round((lengths[ri] / total) * count)
-    for (let j = 0; j < m; j++, n++) {
-      const t = Math.random()
-      const [x0, y0] = ridgePoint(print, rd, t)
-      // a ridge has width: jitter across it, denser at the centre line
-      const [x1, y1] = ridgePoint(print, rd, Math.min(1, t + 0.002))
-      const nx = -(y1 - y0)
-      const ny = x1 - x0
-      const nl = Math.hypot(nx, ny) || 1
-      const w = (Math.random() + Math.random() - 1) * 0.32
-      const sx = x0 + (nx / nl) * w - 50
-      const sy = -(y0 + (ny / nl) * w - 58)
-      position[n * 3] = (sx * cos - sy * sin) * k
-      position[n * 3 + 1] = (sx * sin + sy * cos) * k
-      position[n * 3 + 2] = (Math.random() - 0.5) * 0.08
-      v.randomDirection().multiplyScalar(5 + Math.random() * 12)
-      scatter.set([v.x, v.y * 0.7, v.z - 4], n * 3)
-      u[n] = t
-      ridge[n] = rd.i / print.ridges.length
-      seed[n] = Math.random()
-    }
-  })
+  for (let i = 0; i < count; i++) {
+    v.randomDirection().multiplyScalar(5 + Math.random() * 12)
+    scatter.set([v.x, v.y * 0.7, v.z - 4], i * 3)
+    seed[i] = Math.random()
+  }
   const g = new THREE.BufferGeometry()
   g.setAttribute('position', new THREE.BufferAttribute(position, 3))
   g.setAttribute('aScatter', new THREE.BufferAttribute(scatter, 3))
   g.setAttribute('aU', new THREE.BufferAttribute(u, 1))
   g.setAttribute('aRidge', new THREE.BufferAttribute(ridge, 1))
   g.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1))
+  g.userData.radius = radius
   return g
 }
 
@@ -133,6 +103,8 @@ const normal = new THREE.Vector3()
 export function Fingerprint() {
   const group = useRef()
   const label = useRef()
+  const ring = useRef()
+  const center = useMemo(() => new THREE.Vector3(), [])
   const born = useRef(0)
   const geometry = useMemo(() => buildPrint(xp.mobile ? 12000 : 26000), [])
   const material = useMemo(
@@ -145,7 +117,7 @@ export function Fingerprint() {
           uForm: { value: 0 },
           uBurst: { value: 0 },
           uScale: { value: 1000 },
-          uSize: { value: 0.042 },
+          uSize: { value: 0.036 },
           uScan: { value: 10 },
           uPulse: { value: -1 },
           uPointer: { value: new THREE.Vector3(99, 99, 0) },
@@ -162,12 +134,13 @@ export function Fingerprint() {
     const g = group.current
     if (!g) return
     const p = xp.progress
-    const burst = smooth(seg(p, 0.004, P.many * 0.8))
+    const burst = smooth(seg(p, 0.004, P.problem * 0.7))
     g.visible = burst < 0.999
     if (!g.visible) return
     const t = state.clock.elapsedTime
     const u = material.uniforms
-    born.current = xp.reduced ? 1 : Math.min(1, born.current + dt / 3.2)
+    // forms once the preloader has lifted
+    if (xp.revealed) born.current = xp.reduced ? 1 : Math.min(1, born.current + dt / 3.2)
     u.uTime.value = t
     u.uForm.value = born.current
     u.uBurst.value = burst
@@ -192,10 +165,17 @@ export function Fingerprint() {
     }
     // a gentle lean toward the pointer, for depth
     if (!xp.reduced) {
-      g.rotation.y = THREE.MathUtils.damp(g.rotation.y, -0.18 + xp.pointer.x * 0.16, 3, dt)
+      g.rotation.y = THREE.MathUtils.damp(g.rotation.y, xp.pointer.x * 0.16, 3, dt)
       g.rotation.x = THREE.MathUtils.damp(g.rotation.x, xp.pointer.y * 0.12, 3, dt)
     }
 
+    // the scanner ring, sized to the print's projected height
+    if (ring.current) {
+      const dist = state.camera.position.distanceTo(g.getWorldPosition(center))
+      const px = (geometry.userData.radius * 2.22 * state.size.height) / (2 * Math.tan(THREE.MathUtils.degToRad(state.camera.fov) / 2) * dist)
+      ring.current.style.width = ring.current.style.height = `${Math.round(px)}px`
+      ring.current.style.opacity = String((1 - Math.min(1, burst * 3)) * smooth(seg(born.current, 0.35, 1)))
+    }
     if (label.current) {
       const done = born.current >= 1 && cycle >= 0.45
       label.current.dataset.state = born.current < 1 ? 'forming' : scanning ? 'scanning' : done ? 'verified' : 'idle'
@@ -204,9 +184,14 @@ export function Fingerprint() {
   })
 
   return (
-    <group ref={group} position={PRINT_POS} rotation={[0, -0.18, 0]}>
+    <group ref={group} position={PRINT_POS} rotation={[0, 0, 0]}>
       <points geometry={geometry} material={material} frustumCulled={false} />
-      <Html position={[0, -HEIGHT * 0.7, 0]} center zIndexRange={[16, 0]} style={{ pointerEvents: 'none' }}>
+      <Html center zIndexRange={[16, 0]} style={{ pointerEvents: 'none' }}>
+        <div ref={ring} style={{ width: 0, height: 0, opacity: 0 }}>
+          <Reticle />
+        </div>
+      </Html>
+      <Html position={[0, -HEIGHT * 0.86, 0]} center zIndexRange={[16, 0]} style={{ pointerEvents: 'none' }}>
         <div ref={label} data-state="forming" className="print-label group flex max-md:!hidden items-center gap-2 font-mono text-[11px] tracking-wide whitespace-nowrap text-white/55" style={{ opacity: 0 }}>
           <span className="relative flex size-1.5">
             <span className="absolute inset-0 rounded-full bg-[#7fe3ff] group-data-[state=scanning]:animate-ping" />

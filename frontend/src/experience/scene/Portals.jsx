@@ -56,9 +56,9 @@ export function Portals() {
     const p = xp.progress
     const t = state.clock.elapsedTime
     layout.forEach((l, i) => {
-      const appear = smooth(seg(p, P.card + 0.02 + i * 0.008, P.everywhere - 0.04 + i * 0.005))
-      const grow = smooth(seg(p, P.card + 0.05 + i * 0.008, P.everywhere - 0.01 + i * 0.002))
-      const lit = smooth(seg(p, P.card + 0.08 + i * 0.008, P.everywhere + i * 0.002))
+      const appear = smooth(seg(p, P.dawn + 0.05 + i * 0.01, P.everywhere - 0.05 + i * 0.006))
+      const grow = smooth(seg(p, P.dawn + 0.08 + i * 0.01, P.everywhere - 0.015 + i * 0.002))
+      const lit = smooth(seg(p, P.dawn + 0.11 + i * 0.01, P.everywhere + i * 0.002))
       const ring = rings.current[i]
       if (ring) {
         ring.visible = appear > 0.001

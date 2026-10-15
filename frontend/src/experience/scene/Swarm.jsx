@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { xp } from '../store'
 import { P, seg, smooth } from '../chapters'
 import { DISK_TILT } from './BlackHole'
+import { printWorldPoints } from './printGeometry'
 
 const COLD = new THREE.Color('#9fb4ff').multiplyScalar(0.9)
 const THREAT = new THREE.Color('#ff2e63').multiplyScalar(1.7)
@@ -60,9 +61,10 @@ export function Swarm({ count = 1800 }) {
   const mesh = useRef()
   const dummy = useMemo(() => new THREE.Object3D(), [])
   const tex = useMemo(() => walletTexture(), [])
-  const chips = useMemo(
-    () =>
-      Array.from({ length: count }, () => ({
+  const chips = useMemo(() => {
+    const origins = printWorldPoints(count)
+    return Array.from({ length: count }, (_, i) => ({
+        origin: origins[i],
         r: 3 + Math.pow(Math.random(), 0.55) * 8,
         theta: Math.random() * Math.PI * 2,
         phi: Math.acos(2 * Math.random() - 1),
@@ -72,9 +74,8 @@ export function Swarm({ count = 1800 }) {
         size: 0.5 + Math.random() * 0.7,
         lag: Math.random() * 0.09,
         ang: 0,
-      })),
-    [count],
-  )
+      }))
+  }, [count])
   const color = useMemo(() => new THREE.Color(), [])
 
   useFrame((state, delta) => {
@@ -83,18 +84,18 @@ export function Swarm({ count = 1800 }) {
     const dt = Math.min(delta, 0.05)
     const m = mesh.current
     if (!m) return
-    m.visible = p > 0.015 && p < P.collapse + 0.04
+    m.visible = p > 0.004 && p < P.collapse + 0.04
     if (!m.visible) return
     if (!m.instanceColor) {
       m.setColorAt(0, tint.setRGB(1, 1, 1))
       m.material.needsUpdate = true
     }
-    const threat = smooth(seg(p, 0.02, P.many))
+    const threat = smooth(seg(p, 0.03, P.problem))
     const pull = smooth(seg(p, P.void - 0.06, P.collapse))
     color.copy(COLD).lerp(THREAT, threat).lerp(HOT, pull * 0.8)
     m.material.color.copy(color)
-    // absent on the hero: the wallets appear as the print shatters into them
-    m.material.opacity = (0.45 + 0.55 * threat) * smooth(seg(p, 0.02, P.many * 0.85))
+    // absent on the hero: the wallets are born out of the print as it fractures
+    m.material.opacity = (0.45 + 0.55 * threat) * smooth(seg(p, 0.004, 0.04))
 
     for (let i = 0; i < count; i++) {
       const c = chips[i]
@@ -112,6 +113,10 @@ export function Swarm({ count = 1800 }) {
       const flat = flatV.set(Math.cos(a) * r, Math.sin(a) * r, 0).applyQuaternion(tilt)
       const settle = smooth(Math.min(1, k * 1.6))
       dummy.position.copy(shell).lerp(flat, settle)
+      // the fracture: each wallet leaves its spot on the print and flies out to the swarm
+      const emerge = smooth(seg(p, 0.004 + c.lag * 0.4, P.problem * 0.82 + c.lag * 0.15))
+      const out = 1 - Math.pow(1 - emerge, 3)
+      if (out < 1) dummy.position.lerpVectors(c.origin, dummy.position, out)
 
       // tumbling in free space; once captured, tides line each one up radially
       dummy.rotation.set(t * c.spin.x + c.wobble, t * c.spin.y, t * c.spin.z)
@@ -125,7 +130,7 @@ export function Swarm({ count = 1800 }) {
       const stretch = settle * Math.min(6, Math.pow(ISCO / r, 3)) * 1.4
       // tides shred each wallet into the disk's gas well before the shadow's edge
       const gone = smooth(seg(r, 3.4, 2.3))
-      const sz = c.size * (1 - gone)
+      const sz = c.size * (1 - gone) * (0.15 + 0.85 * out)
       dummy.scale.set(sz * (1 + stretch), sz / (1 + stretch * 0.5), 1)
       dummy.updateMatrix()
       m.setMatrixAt(i, dummy.matrix)

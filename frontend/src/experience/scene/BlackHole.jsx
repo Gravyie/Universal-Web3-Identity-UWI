@@ -194,7 +194,7 @@ export function BlackHole() {
     const p = xp.progress
     const g = root.current
     if (!g) return
-    const grow = smooth(seg(p, P.farmed + 0.02, P.void))
+    const grow = smooth(seg(p, P.problem + 0.03, P.void))
     const implode = smooth(seg(p, NOVA - 0.035, NOVA))
     const s = grow * (1 + 0.15 * smooth(seg(p, P.void, P.collapse))) * (1 - implode)
     g.visible = s > 0.002

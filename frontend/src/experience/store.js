@@ -7,6 +7,7 @@ export const xp = {
   reduced: false,
   mobile: false,
   inPage: false, // true once the viewer has scrolled past the experience into the page
+  revealed: false, // the preloader has lifted and the hero is on screen
 }
 
 // The same progress as a motion value, for DOM layers.

@@ -195,7 +195,7 @@ export function useChapters() {
       const up = y < lastY
       lastY = y
       if (modeRef.current === 'page' && up && y < window.innerHeight * 0.6) {
-        wheel.spend(-1) // the scroll that brought you back ends here; it must not rewind chapters
+        wheel.lock(-1) // leftover momentum is ignored; a deliberate scroll carries on into the story
         enterChapters()
       }
     }
