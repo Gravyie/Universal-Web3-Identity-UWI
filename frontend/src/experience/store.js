@@ -26,6 +26,8 @@ if (import.meta.env.DEV && typeof window !== 'undefined') window.__xp = xp
  * fast the scroll moves; scrolling back rewinds it, so it plays in reverse;
  * and jumping far ahead fast-forwards it, so later chapters arrive complete.
  */
+export const NOVA_END = 3.6 // seconds: the explosion, the card and the nebula have all formed
+
 export function novaTime() {
   if (xp.reduced) return xp.progress >= NOVA ? 99 : 0
   return xp.novaT

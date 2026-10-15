@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { CHAPTERS, NOVA } from './chapters'
+import { NOVA_END } from './store'
 import { xp } from './store'
 import { score } from './score'
 import { createWheelIntent } from './wheelIntent'
@@ -79,9 +80,11 @@ export function useChapters() {
         score.nova(0.05)
       }
       // the supernova's clock: forward past it (faster when far ahead), rewinding before it
-      if (xp.progress >= NOVA) xp.novaT = Math.min(6, xp.novaT + dt * (xp.progress > NOVA + STEP * 0.75 ? 3 : 1))
-      else if (xp.progress < NOVA - STEP * 0.4) xp.novaT = 0
-      else xp.novaT = Math.max(0, xp.novaT - dt * 2.5)
+      // It stops at NOVA_END (everything has formed by then), rewinds in about 1.2s, and only
+      // snaps to zero after a jump far back, when the explosion is long out of shot.
+      if (xp.progress >= NOVA) xp.novaT = Math.min(NOVA_END, xp.novaT + dt * (xp.progress > NOVA + STEP * 0.75 ? 3 : 1))
+      else if (xp.progress < NOVA - STEP * 1.2) xp.novaT = 0
+      else xp.novaT = Math.max(0, xp.novaT - dt * 3)
       const i = Math.round(xp.progress / STEP)
       if (i !== idx.current) {
         idx.current = i

@@ -3,7 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { Environment, Lightformer, PerformanceMonitor, Sparkles } from '@react-three/drei'
 import { Bloom, ChromaticAberration, EffectComposer, Vignette } from '@react-three/postprocessing'
 import * as THREE from 'three'
-import { xp } from '../store'
+import { novaTime, xp } from '../store'
 import { NOVA } from '../chapters'
 import { CameraRig } from './CameraRig'
 import { Swarm } from './Swarm'
@@ -30,7 +30,8 @@ function ReadySignal() {
 function Space() {
   const ref = useRef()
   useFrame(() => {
-    ref.current.visible = xp.progress < NOVA + 0.01
+    // the space before the supernova: hidden while the explosion is on screen, both ways
+    ref.current.visible = xp.progress < NOVA + 0.01 && novaTime() < 0.6
   })
   return (
     <group ref={ref}>
@@ -43,17 +44,15 @@ function Space() {
 
 /**
  * One persistent scene for the whole landing experience. Resolution adapts
- * to the GPU (dropping when frames slow down), and while the page is being
- * read over it the scene holds its last frame instead of re-rendering.
+ * to the GPU (dropping when frames slow down).
  */
-export default function Stage({ paused = false }) {
+export default function Stage() {
   const ca = useMemo(() => new THREE.Vector2(0.0004, 0.0004), [])
   const max = xp.mobile ? 1.25 : 1.5
   const [dpr, setDpr] = useState(Math.min(max, window.devicePixelRatio || 1))
   return (
     <Canvas
       className="!fixed inset-0 overflow-hidden"
-      frameloop={paused ? 'demand' : 'always'}
       dpr={dpr}
       camera={{ position: [0, 0.6, 18], fov: 34, near: 0.1, far: 140 }}
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping }}

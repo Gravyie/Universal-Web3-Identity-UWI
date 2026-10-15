@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { Sparkles } from '@react-three/drei'
 import * as THREE from 'three'
 import { novaTime, xp } from '../store'
-import { NOVA, P, seg, smooth } from '../chapters'
+import { P, seg, smooth } from '../chapters'
 
 // Gas clouds left by the supernova: domain-warped noise on camera-facing
 // planes at different depths, so the camera moves through real parallax.

@@ -62,10 +62,9 @@ export default function Landing() {
   useEffect(() => score.duck(chapters.mode === 'page'), [chapters.mode])
 
   // The page scrolls natively over the story. As it does, the story's text
-  // fades and the scene dims; once it is fully covered the scene stops drawing.
+  // fades and the scene dims, still moving behind the page.
   const root = useRef(null)
   const [faded, setFaded] = useState(false)
-  const [covered, setCovered] = useState(false)
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY
@@ -74,7 +73,6 @@ export default function Landing() {
       root.current?.style.setProperty('--story-fade', String(xp.storyFade))
       root.current?.style.setProperty('--story-dim', String(Math.min(1, y / h)))
       setFaded(y > h * 0.25)
-      setCovered(y > h * 1.05)
     }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -84,7 +82,7 @@ export default function Landing() {
   return (
     <div ref={root} data-theme="dark" className="relative min-h-dvh overflow-x-clip bg-[#020306] text-white">
       <Suspense fallback={<div className="fixed inset-0 bg-[#020306]" />}>
-        <Stage paused={chapters.mode === 'page' && covered} />
+        <Stage />
       </Suspense>
       <div
         aria-hidden="true"
