@@ -9,6 +9,7 @@ import { useChapters } from '../experience/useChapters'
 import { Overlay } from '../experience/Overlay'
 import { Preloader } from '../experience/Preloader'
 import { hasWebGL, loading } from '../experience/loading'
+import { detectTier } from '../experience/quality'
 import { score } from '../experience/score'
 import { HoloCard } from '../components/holo/HoloCard'
 import { HERO_CARD } from '../experience/heroCard'
@@ -72,6 +73,11 @@ export default function Landing() {
   const mobile = useMediaQuery('(max-width: 767px)')
   xp.reduced = Boolean(reduce)
   xp.mobile = mobile
+  // the quality tier is chosen once, before the scene mounts, and never changes after
+  if (!xp.tierChosen) {
+    xp.tier = detectTier({ mobile, reduced: Boolean(reduce) })
+    xp.tierChosen = true
+  }
   const chapters = useChapters()
   const [revealed, setRevealed] = useState(xp.revealed)
   const reveal = () => {

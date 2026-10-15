@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { novaTime, xp } from '../store'
 import { NOVA } from '../chapters'
 import { loading } from '../loading'
+import { TIERS, createFrameGuard } from '../quality'
 import { CameraRig } from './CameraRig'
 import { Swarm } from './Swarm'
 import { BlackHole } from './BlackHole'
@@ -75,7 +76,7 @@ function Warmup({ toTarget }) {
  * has twice the time to finish, so the GPU never falls behind and the browser
  * never shows a frame it couldn't complete.
  */
-function FrameCap({ fps = 30 }) {
+function FrameCap({ fps }) {
   const invalidate = useThree((s) => s.invalidate)
   useEffect(() => {
     let raf = 0
@@ -94,6 +95,21 @@ function FrameCap({ fps = 30 }) {
   return null
 }
 
+/**
+ * Phones only: steps quality down when frames run slow for a while (see
+ * quality.js). First the frame cap drops to 30fps, then fewer particles are
+ * drawn. Neither touches the canvas or a render target, so neither can flash.
+ */
+function FrameGuard({ fps, setFps }) {
+  const guard = useMemo(() => createFrameGuard({ budgetMs: 1000 / fps }), [fps])
+  useFrame((_, dt) => {
+    if (guard(performance.now(), dt * 1000) !== 'step-down') return
+    if (fps > 30) setFps(30)
+    else if (xp.particleScale > 0.6) xp.particleScale = 0.6
+  })
+  return null
+}
+
 /** Deep space, visible until the supernova. */
 function Space() {
   const ref = useRef()
@@ -103,8 +119,8 @@ function Space() {
   })
   return (
     <group ref={ref}>
-      <Sparkles count={xp.mobile ? 160 : 420} scale={[34, 20, 34]} size={1.6} speed={0.12} opacity={0.5} color="#cfe0ff" />
-      <Swarm count={xp.mobile ? 700 : 1800} />
+      <Sparkles count={TIERS[xp.tier].sparkles} scale={[34, 20, 34]} size={1.6} speed={0.12} opacity={0.5} color="#cfe0ff" />
+      <Swarm count={TIERS[xp.tier].swarm} />
       <BlackHole />
     </group>
   )
@@ -117,16 +133,19 @@ function Space() {
  * Desktop: device pixel ratio up to 1.5, lowered when frames slow down, with
  * bloom, chromatic aberration and vignette.
  *
- * Phones (lite): a fixed 1x resolution, 30fps, and no post-processing at all.
+ * Phones (lite, tiers in quality.js): a fixed resolution, a frame cap, and no
+ * post-processing at all.
  * Post-processing keeps a stack of full-screen half-float buffers, the largest
  * GPU memory cost here and a format some phones handle badly; together with
  * fill-rate spikes that is what makes mobile WebGL flash black. The heavy
  * shaders have lighter phone variants too (see Nebula, Supernova, BlackHole).
  */
 export default function Stage() {
-  const lite = xp.mobile
+  const tier = TIERS[xp.tier]
+  const lite = !tier.post
   const ca = useMemo(() => new THREE.Vector2(0.0004, 0.0004), [])
-  const [dpr, setDpr] = useState(Math.min(lite ? 1 : 1.5, window.devicePixelRatio || 1))
+  const [dpr, setDpr] = useState(Math.min(tier.dpr, window.devicePixelRatio || 1))
+  const [fps, setFps] = useState(tier.fps)
   // three.js restores a lost GPU context by itself; if it stays lost, hand over to the static page
   const [lost, setLost] = useState(false)
   if (lost) throw new Error('WebGL context lost and not restored')
@@ -142,15 +161,22 @@ export default function Stage() {
       // only real size changes resize the canvas (each resize clears it for a frame)
       resize={{ scroll: false, debounce: { scroll: 0, resize: 250 } }}
       dpr={dpr}
-      frameloop={lite ? 'demand' : 'always'}
+      frameloop={fps ? 'demand' : 'always'}
       camera={{ position: [0, 0.6, 18], fov: 34, near: 0.1, far: 140 }}
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping }}
       onCreated={watchContext}
     >
       <color attach="background" args={['#020306']} />
-      {/* Desktop: resolution only steps down, and gives up after a couple of changes. Phones keep
-          one fixed resolution: every change reallocates the canvas, which shows as a black flash. */}
-      {lite ? <FrameCap /> : <PerformanceMonitor flipflops={2} onDecline={() => setDpr((d) => Math.max(0.75, d - 0.25))} onFallback={() => setDpr(1)} />}
+      {/* Phones: a frame cap and a guard that only lowers it. Desktop: resolution only steps
+          down, and gives up after a couple of changes (every change reallocates the canvas). */}
+      {fps ? (
+        <>
+          <FrameCap fps={fps} />
+          <FrameGuard fps={fps} setFps={setFps} />
+        </>
+      ) : (
+        <PerformanceMonitor flipflops={2} onDecline={() => setDpr((d) => Math.max(0.75, d - 0.25))} onFallback={() => setDpr(1)} />
+      )}
       <Suspense fallback={null}>
         <CameraRig />
         <Fingerprint />

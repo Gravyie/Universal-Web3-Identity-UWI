@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { xp } from '../store'
+import { TIERS } from '../quality'
 import { NOVA, P, seg, smooth } from '../chapters'
 
 export const DISK_TILT = 0.17 // radians above edge-on: the grazing view that shows the lensed far side
@@ -179,7 +180,7 @@ export function BlackHole() {
       new THREE.ShaderMaterial({
         uniforms: { uInv: { value: new THREE.Matrix4() }, uCam: { value: new THREE.Vector3() }, uTime: { value: 0 }, uIntensity: { value: 1 }, uDrain: { value: 0 } },
         vertexShader: vertex,
-        fragmentShader: fragment(xp.mobile ? 76 : 170),
+        fragmentShader: fragment(TIERS[xp.tier].blackHoleSteps),
         transparent: true,
         depthWrite: false,
         depthTest: false,
@@ -190,7 +191,18 @@ export function BlackHole() {
       }),
     [],
   )
-  const halo = useMemo(() => radialSprite([[0, 'rgba(255,170,110,0.06)'], [0.4, 'rgba(255,110,60,0.015)'], [1, 'rgba(0,0,0,0)']]), [])
+  // Without bloom (phones), a stronger warm halo and a brighter disk stand in for the glow:
+  // one sprite and a multiplier, so it costs next to nothing.
+  const glow = !TIERS[xp.tier].post
+  const halo = useMemo(
+    () =>
+      radialSprite(
+        glow
+          ? [[0, 'rgba(255,190,130,0.34)'], [0.22, 'rgba(255,140,80,0.16)'], [0.5, 'rgba(255,100,50,0.05)'], [1, 'rgba(0,0,0,0)']]
+          : [[0, 'rgba(255,170,110,0.06)'], [0.4, 'rgba(255,110,60,0.015)'], [1, 'rgba(0,0,0,0)']],
+      ),
+    [glow],
+  )
 
   useFrame((state, dt) => {
     const p = xp.progress
@@ -208,7 +220,7 @@ export function BlackHole() {
     // feeding makes the disk flare; then the disk drains in and the hole implodes
     const feed = 1 + 0.35 * Math.sin(Math.PI * seg(p, P.void + 0.03, P.collapse))
     const drain = smooth(seg(p, P.collapse + 0.005, NOVA - 0.008))
-    material.uniforms.uIntensity.value = feed * (1 + drain * 1.6 + implode * 3)
+    material.uniforms.uIntensity.value = feed * (1 + drain * 1.6 + implode * 3) * (glow ? 1.55 : 1)
     material.uniforms.uDrain.value = drain
     material.uniforms.uTime.value = state.clock.elapsedTime
     billboard.current.quaternion.copy(state.camera.quaternion)

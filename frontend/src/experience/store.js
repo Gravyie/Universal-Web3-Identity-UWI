@@ -9,6 +9,8 @@ export const xp = {
   mobile: false,
   inPage: false, // true once the viewer has scrolled past the experience into the page
   revealed: false, // the preloader has lifted and the hero is on screen
+  tier: 'high', // quality tier, fixed for the session (see quality.js)
+  particleScale: 1, // share of particles drawn; only ever lowered at runtime
   bhScale: 0, // the black hole's current size, for lensing what passes behind it
   novaT: 0, // the supernova's own clock, in seconds; runs forward past it and rewinds before it
   storyFade: 0, // 0..1 as the page scrolls up over the story

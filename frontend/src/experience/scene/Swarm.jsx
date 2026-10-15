@@ -2,6 +2,7 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { xp } from '../store'
+import { TIERS } from '../quality'
 import { P, seg, smooth } from '../chapters'
 import { DISK_TILT } from './BlackHole'
 import { printWorldPoints } from './printGeometry'
@@ -154,6 +155,10 @@ export function Swarm({ count = 1800 }) {
     if (!m.visible) return
     // absent on the hero: the wallets are born out of the print as it fractures
     m.material.opacity = smooth(seg(p, 0.004, 0.04))
+    // without bloom (phones) the wallets glow a little brighter on their own
+    if (!TIERS[xp.tier].post) m.material.color.setScalar(1.4)
+    // the frame guard can lower how many are drawn; changing the count costs nothing
+    m.count = Math.max(1, Math.floor(count * xp.particleScale))
     // the lens sits at the hole, in view space, and is as strong as the hole is grown
     const lens = material.userData.uniforms
     lens.uLens.value.copy(lensCenter.set(0, 0, 0).applyMatrix4(state.camera.matrixWorldInverse))
