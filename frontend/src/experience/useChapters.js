@@ -187,12 +187,26 @@ export function useChapters() {
       e.preventDefault()
       step(dir)
     }
+    // Scrolling back up out of the page hands straight back to the story, so the
+    // empty first screen behind the page is never shown on its own.
+    let lastY = window.scrollY
+    const onScroll = () => {
+      const y = window.scrollY
+      const up = y < lastY
+      lastY = y
+      if (modeRef.current === 'page' && up && y < window.innerHeight * 0.6) {
+        wheel.spend(-1) // the scroll that brought you back ends here; it must not rewind chapters
+        enterChapters()
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('wheel', onWheel, { passive: false })
     window.addEventListener('touchstart', onTouchStart, { passive: true })
     window.addEventListener('touchmove', onTouchMove, { passive: false })
     window.addEventListener('touchend', onTouchEnd, { passive: true })
     window.addEventListener('keydown', onKey)
     return () => {
+      window.removeEventListener('scroll', onScroll)
       window.removeEventListener('wheel', onWheel)
       window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchmove', onTouchMove)
@@ -217,8 +231,9 @@ export function useChapters() {
 
   const play = useCallback(() => {
     if (playing) return setPlaying(false)
-    if (idx.current === LAST) goTo(0)
-    else goTo(idx.current + 1)
+    const cur = Math.round(target.current / STEP) // where the story is heading, not where it is mid-move
+    if (cur === LAST) goTo(0)
+    else goTo(cur + 1)
     setPlaying(true)
   }, [playing, goTo])
 

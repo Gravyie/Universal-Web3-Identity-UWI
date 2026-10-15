@@ -1,127 +1,103 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import NumberFlow from '@number-flow/react'
-import { CheckCircle, Coins, GameController, Gavel, ListChecks, Sparkle, UsersThree } from '@phosphor-icons/react'
 import { HoloCard } from '../components/holo/HoloCard'
 import { useLiveStats } from '../hooks/useLiveStats'
+import { HERO_CARD } from './heroCard'
 
 const ease = [0.16, 1, 0.3, 1]
 
-// Apps asking the one question UWI answers. Each check resolves against the same card.
-const CHECKS = [
-  { app: 'Season 2 airdrop', icon: Coins, ask: 'Unique human?', ms: 11 },
-  { app: 'Treasury vote', icon: Gavel, ask: 'One person, one vote?', ms: 9 },
-  { app: 'Arena ranked', icon: GameController, ask: 'Not a bot?', ms: 14 },
-  { app: 'Mint waitlist', icon: ListChecks, ask: 'First entry?', ms: 8 },
-  { app: 'Builder guild', icon: UsersThree, ask: 'Verified member?', ms: 12 },
-  { app: 'Quest board', icon: Sparkle, ask: 'Real player?', ms: 10 },
-]
-// Where toasts sit around the card (percent of the visual's box).
-// Above the card on the left and below it on the right, clear of the card's details.
-const SLOTS = [
-  { left: '-4%', top: '0%' },
-  { right: '-6%', bottom: '0%' },
+// Calls an app makes against the registry. Every one resolves the same way.
+const CALLS = [
+  ['isVerifiedHuman', '0x7a3F…4F61', 'true', 11],
+  ['humanOf', '@you', '0x7a3F…4F61', 9],
+  ['isVerifiedHumanStrict', '0x7a3F…4F61', 'true', 14],
+  ['joinGate', 'season-2', 'joined · 1 of 1', 12],
 ]
 
-function Check({ c }) {
-  const Icon = c.icon
+/** A single contract call, typed out and answered, under the card. */
+function LiveCall() {
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setI((v) => (v + 1) % CALLS.length), 3200)
+    return () => clearInterval(t)
+  }, [])
+  const [fn, arg, out, ms] = CALLS[i]
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-white/12 bg-[#0b0d14]/70 py-2.5 pr-4 pl-2.5 shadow-[0_20px_50px_-20px_rgb(0_0_0/0.9)] backdrop-blur-xl">
-      <span className="grid size-9 place-items-center rounded-xl bg-white/[0.07] text-white/85">
-        <Icon className="size-[18px]" weight="duotone" />
-      </span>
-      <div className="leading-tight">
-        <p className="text-[13px] font-medium text-white">{c.app}</p>
-        <p className="mt-0.5 flex items-center gap-1 text-xs text-white/55">
-          {c.ask}
-          <CheckCircle weight="fill" className="ml-1 size-3.5 text-[#7fe3ff]" />
-          <span className="text-[#7fe3ff]">Yes</span>
-          <span className="ml-1 tabular-nums text-white/35">{c.ms} ms</span>
-        </p>
-      </div>
+    <div className="flex h-6 items-center justify-center font-mono text-[12px] text-white/45 sm:text-[13px]">
+      <AnimatePresence mode="wait">
+        <motion.p key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.45, ease }} className="whitespace-nowrap">
+          <span className="text-white/75">uwi.{fn}</span>({arg})
+          <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55, duration: 0.3 }}>
+            {' → '}
+            <span className="text-[#7fe3ff]">{out}</span>
+            <span className="ml-2 text-white/30">{ms}ms</span>
+          </motion.span>
+        </motion.p>
+      </AnimatePresence>
     </div>
   )
 }
 
-/** The hero's right side: the credential itself, being checked by app after app. */
-export function HeroVisual() {
-  const [n, setN] = useState(0)
-  useEffect(() => {
-    const t = setInterval(() => setN((v) => v + 1), 2400)
-    return () => clearInterval(t)
-  }, [])
-  const shown = [0, 1].map((k) => ({ slot: (n + k) % 2, c: CHECKS[(n + k) % CHECKS.length], key: n + k }))
-
+/**
+ * The hero's subject: one verified credential rising out of the swarm of
+ * wallets, lit from behind, tilting under the pointer.
+ */
+export function HeroCard() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30, rotateX: 18, scale: 0.94 }}
-      animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
-      transition={{ duration: 1.4, delay: 0.35, ease }}
-      className="relative mx-auto w-full max-w-[520px] [perspective:1200px]"
-    >
-      {/* a soft pool of light under the card */}
-      <div aria-hidden="true" className="absolute inset-x-[8%] top-[18%] bottom-[8%] rounded-full bg-[radial-gradient(closest-side,rgb(127_227_255/0.22),rgb(155_123_255/0.12)_55%,transparent)] blur-2xl" />
-      <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }} className="relative px-[9%] py-[16%]">
-        <HoloCard
-          username="you"
-          address="0x7a3F1c9E0b5D2A8e4C6f1B3d9E7a2C5b8D0e4F61"
-          tokenId={1}
-          issuedAt={Date.now()}
-          proof="self"
-          label="Example UWI credential. Move your pointer over it."
-        />
-      </motion.div>
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden sm:block">
-        <AnimatePresence>
-          {shown.map(({ slot, c, key }) => (
+    <div className="relative w-[min(78vw,440px)] lg:w-[min(32vw,480px)]">
+      {/* backlight: the only lit thing in a cold swarm */}
+      <motion.div
+        aria-hidden="true"
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 2, delay: 0.5, ease }}
+        className="absolute -inset-[30%] rounded-full bg-[radial-gradient(closest-side,rgb(127_227_255/0.28),rgb(155_123_255/0.16)_50%,transparent)] blur-2xl"
+      />
+      <motion.div
+        initial={{ opacity: 0, y: 120, scale: 0.55, rotateX: 55, filter: 'blur(14px)' }}
+        animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0, filter: 'blur(0px)' }}
+        transition={{ duration: 1.8, delay: 0.35, ease }}
+        className="[perspective:1400px]"
+      >
+        <motion.div animate={{ y: [0, -12, 0], rotate: [-3, -1.5, -3] }} transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }} className="relative">
+          <HoloCard {...HERO_CARD} label="Your UWI credential. Move your pointer over it." />
+          {/* a verification sweep once the card lands, then every few seconds */}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-[20px]">
             <motion.div
-              key={key}
-              className="absolute"
-              style={SLOTS[slot]}
-              initial={{ opacity: 0, y: 14, scale: 0.94, filter: 'blur(6px)' }}
-              animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, y: -10, scale: 0.97, filter: 'blur(6px)', transition: { duration: 0.4 } }}
-              transition={{ duration: 0.7, ease }}
-            >
-              <Check c={c} />
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-    </motion.div>
+              initial={{ y: '-120%' }}
+              animate={{ y: ['-120%', '220%'] }}
+              transition={{ duration: 1.4, delay: 2, repeat: Infinity, repeatDelay: 5.2, ease: [0.65, 0, 0.35, 1] }}
+              className="h-1/2 w-full bg-gradient-to-b from-transparent via-white/45 to-transparent mix-blend-overlay"
+            />
+          </div>
+        </motion.div>
+      </motion.div>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.9, duration: 0.8 }} className="mt-7">
+        <LiveCall />
+      </motion.div>
+    </div>
   )
 }
 
-/** Live numbers from the registry, under the hero CTAs. */
-export function HeroProof() {
+/** Live numbers from the registry. */
+export function HeroProof({ className = '' }) {
   const { humans, gates } = useLiveStats()
-  const ready = humans !== undefined
+  const items = [
+    [humans, 'verified humans'],
+    [gates, 'sybil-proof gates'],
+    [0, 'gas paid by people', '$'],
+  ]
   return (
-    <motion.ul
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay: 0.75, ease }}
-      className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-white/55"
-    >
-      <li className="flex items-center gap-2">
-        <span className="relative flex size-2">
-          <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/70" />
-          <span className="relative size-2 rounded-full bg-emerald-400" />
-        </span>
-        Live on Hedera
-      </li>
-      <li className="flex items-baseline gap-1.5">
-        <span className="font-medium text-white tabular-nums">{ready ? <NumberFlow value={Number(humans)} /> : '—'}</span>
-        <span>verified humans</span>
-      </li>
-      <li className="flex items-baseline gap-1.5">
-        <span className="font-medium text-white tabular-nums">{ready ? <NumberFlow value={Number(gates ?? 0)} /> : '—'}</span>
-        <span>gates</span>
-      </li>
-      <li className="flex items-baseline gap-1.5">
-        <span className="font-medium text-white">$0</span>
-        <span>gas for people</span>
-      </li>
-    </motion.ul>
+    <ul className={`flex items-end gap-7 ${className}`}>
+      {items.map(([v, label, prefix]) => (
+        <li key={label}>
+          <p className="text-2xl font-semibold tracking-[-0.04em] text-white tabular-nums sm:text-[28px]">
+            {v === undefined ? <span className="inline-block h-7 w-8 animate-pulse rounded-md bg-white/10 align-middle" /> : <NumberFlow value={Number(v)} prefix={prefix} />}
+          </p>
+          <p className="mt-1 text-xs text-white/45">{label}</p>
+        </li>
+      ))}
+    </ul>
   )
 }

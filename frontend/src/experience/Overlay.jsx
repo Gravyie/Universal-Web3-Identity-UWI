@@ -6,7 +6,7 @@ import { CHAPTERS, NOVA } from './chapters'
 import { xpProgress } from './store'
 import { score } from './score'
 import { LogoMark } from '../components/Logo'
-import { HeroProof, HeroVisual } from './HeroVisual'
+import { HeroCard, HeroProof } from './HeroVisual'
 
 const ease = [0.16, 1, 0.3, 1]
 
@@ -39,6 +39,7 @@ const Sub = ({ children, delay = 0.35, className = '' }) => (
   </motion.p>
 )
 
+const DISPLAY = 'text-[clamp(3.1rem,13.5vw,5rem)] md:text-[clamp(4rem,10.4vw,10.5rem)] leading-[0.86] font-semibold tracking-[-0.065em] text-white'
 const H = 'text-[clamp(2.2rem,5.4vw,5rem)] leading-[1.02] font-semibold tracking-[-0.05em] text-white text-balance'
 
 /** What each chapter says, and where on screen it says it. */
@@ -46,36 +47,43 @@ function Copy({ id, onPlay, onExplore }) {
   switch (id) {
     case 'hero':
       return (
-        <div className="absolute inset-0 mx-auto grid max-w-[1400px] content-center items-center gap-6 px-6 pt-20 pb-24 sm:px-10 md:grid-cols-[1.1fr_1fr] md:gap-4 lg:px-16">
-          <div>
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease }}
-              className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] py-1 pr-3 pl-1 text-xs text-white/70 backdrop-blur"
-            >
-              <span className="rounded-full bg-[#7fe3ff] px-2 py-0.5 font-medium text-[#04161c]">New</span>
-              Sybil-proof gates, free for every human
-            </motion.p>
-            <h1 className="text-[clamp(2.5rem,5.2vw,5rem)] leading-[0.98] font-semibold tracking-[-0.055em] text-white">
-              <Words text="Prove you're human once." />
-              <br />
-              <Words text="Use it everywhere." delay={0.25} className="text-white/45" />
-            </h1>
-            <Sub className="mt-6 max-w-md">A private credential that tells any app you're one unique person, and nothing else.</Sub>
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.55, ease }} className="mt-9 flex flex-wrap items-center gap-3">
-              <Link to="/app/verify" className="group inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-black transition-transform active:scale-[0.98]">
-                Get verified <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-              <button type="button" onClick={onPlay} className="inline-flex h-12 items-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 text-[15px] text-white backdrop-blur transition-transform hover:bg-white/10 active:scale-[0.98]">
-                <Play weight="fill" className="size-3.5" /> Watch the story
-              </button>
-            </motion.div>
-            <HeroProof />
+        <div className="absolute inset-0 flex flex-col px-6 pt-20 pb-24 sm:px-10 sm:pt-24 lg:px-16">
+          <h1 className="sr-only">Prove you're human once. Use it everywhere.</h1>
+          {/* the stage: two lines of display type on a diagonal, the card rising between them */}
+          <div className="relative flex min-h-0 flex-1 flex-col justify-between">
+            <p aria-hidden="true" className={`${DISPLAY} self-start`}>
+              <Words text="Prove you're" />
+            </p>
+            <div className="pointer-events-auto relative z-10 flex flex-1 items-center justify-center py-4 md:absolute md:inset-0 md:py-0">
+              <HeroCard />
+            </div>
+            <p aria-hidden="true" className={`${DISPLAY} self-end text-right`}>
+              <Words text="human." delay={0.2} />
+              <Words text="Once." delay={0.32} className="text-white/35" />
+            </p>
           </div>
-          <div className="hidden md:block">
-            <HeroVisual />
-          </div>
+          {/* the base: what it is, what to do, and the live numbers */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 0.9, ease }}
+            className="mt-8 grid items-end gap-6 border-t border-white/10 pt-6 md:grid-cols-[1fr_auto]"
+          >
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:gap-8">
+              <p className="max-w-sm text-[15px] leading-relaxed text-white/65">
+                One private credential that tells any app you're a unique person, and nothing else. Use it everywhere.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link to="/app/verify" className="group inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-black transition-transform active:scale-[0.98]">
+                  Get verified <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+                <button type="button" onClick={onPlay} className="inline-flex h-12 items-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 text-[15px] text-white backdrop-blur transition-transform hover:bg-white/10 active:scale-[0.98]">
+                  <Play weight="fill" className="size-3.5" /> Watch the story
+                </button>
+              </div>
+            </div>
+            <HeroProof className="hidden md:flex" />
+          </motion.div>
         </div>
       )
     case 'many':
@@ -132,7 +140,7 @@ function Copy({ id, onPlay, onExplore }) {
       )
     case 'card':
       return (
-        <div className="absolute right-6 bottom-[13vh] left-6 max-w-md md:top-1/2 md:bottom-auto md:left-auto md:-translate-y-1/2 md:text-right lg:right-40">
+        <div className="absolute right-6 bottom-[13vh] left-6 max-w-md md:top-1/2 md:bottom-auto md:left-auto md:-translate-y-1/2 md:text-right lg:right-56">
           <h2 className="text-[clamp(2rem,4.2vw,3.75rem)] leading-[1.02] font-semibold tracking-[-0.05em] text-white">
             <Words text="One human." />
             <br />

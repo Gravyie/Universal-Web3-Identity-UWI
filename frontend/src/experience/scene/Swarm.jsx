@@ -122,7 +122,8 @@ export function Swarm({ count = 1800 }) {
       }
       // tidal stretch grows as 1/r^3
       const stretch = settle * Math.min(6, Math.pow(ISCO / r, 3)) * 1.4
-      const gone = smooth(seg(r, 1.05, 0.9))
+      // tides shred each wallet into the disk's gas well before the shadow's edge
+      const gone = smooth(seg(r, 3.4, 2.3))
       const sz = c.size * (1 - gone)
       dummy.scale.set(sz * (1 + stretch), sz / (1 + stretch * 0.5), 1)
       dummy.updateMatrix()

@@ -9,6 +9,7 @@ import { useChapters } from '../experience/useChapters'
 import { Overlay } from '../experience/Overlay'
 import { score } from '../experience/score'
 import { HoloCard } from '../components/holo/HoloCard'
+import { HERO_CARD } from '../experience/heroCard'
 import { LogoMark } from '../components/Logo'
 import { useLiveStats } from '../hooks/useLiveStats'
 import { Web3 } from '../web3/Web3'
@@ -139,7 +140,7 @@ function Products() {
           <h3 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">Prove it once.</h3>
           <p className="mt-3 max-w-md text-white/65">Scan your passport with Self. Get a soulbound card that holds a username and a hash, never your details.</p>
           <div className="relative mx-auto flex w-full max-w-md flex-1 items-center py-10">
-            <HoloCard username="you" address="0x7a3F1c9E0b5D2A8e4C6f1B3d9E7a2C5b8D0e4F61" tokenId={1} issuedAt={Date.now()} proof="self" label="Example UWI credential. Move your pointer over it." className="w-full" />
+            <HoloCard {...HERO_CARD} label="Example UWI credential. Move your pointer over it." className="w-full" />
           </div>
           <Link to="/app/verify" className="group inline-flex h-11 self-start items-center gap-2 rounded-full bg-white px-5 text-sm font-medium text-black">
             Get verified <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />

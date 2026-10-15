@@ -13,7 +13,7 @@ const SHOTS = [
   { p: P.void, pos: [0, 1.5, 12.5], look: [0, 0, 0], fov: 32 },
   { p: P.collapse, pos: [3.6, 1.4, 11.5], look: [-0.6, 0, 0], fov: 32 },
   { p: NOVA, pos: [0, 0.4, 9], look: [0, 0, 0], fov: 36 },
-  { p: P.dawn, pos: [0, 0.4, 9.5], look: [0, 0.1, -2], fov: 44 },
+  { p: P.dawn, pos: [-0.6, 0.0, 10.5], look: [-1.9, -0.9, -2], fov: 44 },
   { p: P.card, pos: [1.1, 0.4, 7.2], look: [1.5, 0.1, 0], fov: 34 },
   { p: P.everywhere, pos: [0, 1.4, 12.5], look: [0, 0.35, -1], fov: 44 },
   { p: P.cta, pos: [-0.6, 1.1, 9.8], look: [-3.1, 1.0, 0], fov: 38 },
@@ -21,6 +21,7 @@ const SHOTS = [
 
 // Phones are too narrow for side-by-side framing; centre the card and keep text below it.
 const MOBILE = {
+  [P.dawn]: { pos: [0, 0.9, 10], look: [0, -0.5, -2] },
   [P.card]: { pos: [0, 1.3, 7.2], look: [0, -0.2, 0] },
   [P.cta]: { pos: [0, 1.4, 8.6], look: [0, -0.1, 0] },
 }
