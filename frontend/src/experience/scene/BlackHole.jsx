@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { novaTime, xp } from '../store'
+import { xp } from '../store'
 import { NOVA, P, seg, smooth } from '../chapters'
 
 export const DISK_TILT = 0.17 // radians above edge-on: the grazing view that shows the lensed far side
@@ -198,9 +198,7 @@ export function BlackHole() {
     if (!g) return
     const grow = smooth(seg(p, P.problem + 0.03, P.void))
     const implode = smooth(seg(p, NOVA - 0.035, NOVA))
-    // scrolling back, the hole re-forms out of the point as the explosion finishes rewinding
-    const reform = 1 - smooth(seg(novaTime(), 0, 0.6))
-    const s = grow * (1 + 0.15 * smooth(seg(p, P.void, P.collapse))) * (1 - implode) * reform
+    const s = grow * (1 + 0.15 * smooth(seg(p, P.void, P.collapse))) * (1 - implode)
     g.visible = s > 0.002
     xp.bhScale = g.visible ? s : 0
     if (!g.visible) return

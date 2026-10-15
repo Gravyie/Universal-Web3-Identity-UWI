@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { CHAPTERS, NOVA } from './chapters'
+import { CHAPTERS, NOVA, P } from './chapters'
 import { NOVA_END } from './store'
 import { xp } from './store'
 import { score } from './score'
@@ -64,7 +64,12 @@ export function useChapters() {
       const dt = Math.min(0.05, (now - last) / 1000)
       last = now
       const prev = xp.progress
-      const goal = Math.min(1, Math.max(0, target.current + lean.current * STEP))
+      let goal = Math.min(1, Math.max(0, target.current + lean.current * STEP))
+      // Going back one step through the supernova is its exact mirror: the camera holds on
+      // the remnant while the explosion rewinds at its own pace, then travels back as the
+      // hole un-implodes. (A long jump back doesn't wait; it rewinds fast instead.)
+      const stepBack = target.current < NOVA && target.current >= P.collapse - 0.01
+      if (stepBack && xp.novaT > 0.45 && xp.progress >= NOVA) goal = Math.max(goal, xp.progress)
       if (xp.reduced) {
         xp.progress = target.current
         vel.current = 0
@@ -80,11 +85,12 @@ export function useChapters() {
         score.nova(0.05)
       }
       // the supernova's clock: forward past it (faster when far ahead), rewinding before it
-      // It stops at NOVA_END (everything has formed by then), rewinds in about 1.2s, and only
-      // snaps to zero after a jump far back, when the explosion is long out of shot.
-      if (xp.progress >= NOVA) xp.novaT = Math.min(NOVA_END, xp.novaT + dt * (xp.progress > NOVA + STEP * 0.75 ? 3 : 1))
-      else if (xp.progress < NOVA - STEP * 1.2) xp.novaT = 0
-      else xp.novaT = Math.max(0, xp.novaT - dt * 3)
+      // It stops at NOVA_END (everything has formed by then), rewinds at its own pace when
+      // stepping back (fast after a long jump), and snaps to zero once far out of shot.
+      if (target.current < NOVA) {
+        if (xp.progress < NOVA - STEP * 1.2) xp.novaT = 0
+        else xp.novaT = Math.max(0, xp.novaT - dt * (stepBack ? 1 : 4))
+      } else if (xp.progress >= NOVA) xp.novaT = Math.min(NOVA_END, xp.novaT + dt * (xp.progress > NOVA + STEP * 0.75 ? 3 : 1))
       const i = Math.round(xp.progress / STEP)
       if (i !== idx.current) {
         idx.current = i

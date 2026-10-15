@@ -31,7 +31,7 @@ function Space() {
   const ref = useRef()
   useFrame(() => {
     // the space before the supernova: hidden while the explosion is on screen, both ways
-    ref.current.visible = xp.progress < NOVA + 0.01 && novaTime() < 0.6
+    ref.current.visible = xp.progress < NOVA + 0.01 && novaTime() < 0.45
   })
   return (
     <group ref={ref}>
