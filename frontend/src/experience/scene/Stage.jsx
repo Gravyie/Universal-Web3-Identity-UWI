@@ -115,9 +115,9 @@ export default function Stage() {
       onCreated={watchContext}
     >
       <color attach="background" args={['#020306']} />
-      {/* Resolution only steps down, and gives up after a couple of changes: every change
-          reallocates the canvas, and flip-flopping on a phone shows up as black flashes. */}
-      <PerformanceMonitor flipflops={2} onDecline={() => setDpr((d) => Math.max(0.75, d - 0.25))} onFallback={() => setDpr(xp.mobile ? 0.9 : 1)} />
+      {/* Desktop: resolution only steps down, and gives up after a couple of changes. Phones keep
+          one fixed resolution: every change reallocates the canvas, which shows as a black flash. */}
+      {!xp.mobile && <PerformanceMonitor flipflops={2} onDecline={() => setDpr((d) => Math.max(0.75, d - 0.25))} onFallback={() => setDpr(1)} />}
       <Suspense fallback={null}>
         <CameraRig />
         <Fingerprint />

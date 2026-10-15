@@ -24,8 +24,11 @@ const vertex = /* glsl */ `
     vec3 p = u * u * uA + 2.0 * u * t * uB + t * t * uC;
     vec3 tan = 2.0 * u * (uB - uA) + 2.0 * t * (uC - uB);
     vec4 mv = viewMatrix * vec4(p, 1.0);
-    vec3 tv = normalize(mat3(viewMatrix) * tan);
-    vec3 side = normalize(cross(tv, vec3(0.0, 0.0, 1.0)));
+    // guard both normalisations: a zero vector would make NaN pixels, which bloom spreads into a black frame
+    vec3 tv = mat3(viewMatrix) * tan;
+    tv = tv / max(length(tv), 1e-6);
+    vec3 side = cross(tv, vec3(0.0, 0.0, 1.0));
+    side = side / max(length(side), 1e-6);
     mv.xyz += side * aSide * uWidth;
     vS = t;
     vSide = aSide;
@@ -159,7 +162,7 @@ export function Portals() {
             <div
               ref={(el) => (labels.current[i] = el)}
               style={{ opacity: 0 }}
-              className="pointer-events-none rounded-full border border-white/20 bg-black/45 px-2.5 py-1 text-[11px] font-medium whitespace-nowrap text-white backdrop-blur sm:px-3 sm:text-xs"
+              className="pointer-events-none rounded-full border border-white/20 bg-black/45 px-2.5 py-1 text-[11px] font-medium whitespace-nowrap text-white md:backdrop-blur sm:px-3 sm:text-xs"
             >
               {l.name}
             </div>

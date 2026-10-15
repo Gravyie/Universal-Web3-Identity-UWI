@@ -103,7 +103,7 @@ export function SystemPipeline() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.6, delay: i * 0.12, ease: easeOutExpo }}
-            className="relative z-10 h-full rounded-[20px] border border-line bg-surface p-5"
+            className="relative z-10 rounded-[20px] border border-line bg-surface p-5 lg:h-full"
           >
             <n.icon className="size-5 text-accent" weight="duotone" />
             <h3 className="mt-4 font-medium text-ink">{n.title}</h3>

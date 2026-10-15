@@ -25,6 +25,7 @@ const MOBILE = {
   [P.void]: { pos: [0, 1.0, 12.5], look: [0, -1.7, 0] },
   [P.collapse]: { pos: [0, 1.5, 11.5], look: [0, -1.3, 0] },
   [NOVA]: { pos: [0, 0.9, 9.2], look: [0, -0.5, 0] },
+  [P.everywhere]: { pos: [0, 0.3, 12.5], look: [0, -2.2, -1] },
   [P.dawn]: { pos: [0, 0.9, 8.6], look: [0, -0.5, 0] },
   [P.cta]: { pos: [0, 1.0, 12.5], look: [0, -3.1, 0] },
 }

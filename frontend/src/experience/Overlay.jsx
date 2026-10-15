@@ -84,7 +84,7 @@ function MobileMenu({ chapters }) {
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger
         aria-label="Menu"
-        className="grid size-9 place-items-center rounded-full border border-white/15 bg-black/30 text-white backdrop-blur md:hidden"
+        className="grid size-9 place-items-center rounded-full border border-white/15 bg-black/50 md:bg-black/30 text-white md:backdrop-blur md:hidden"
       >
         <List className="size-[18px]" />
       </Dialog.Trigger>
@@ -97,7 +97,7 @@ function MobileMenu({ chapters }) {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.25 }}
-                className="fixed inset-0 z-[80] flex flex-col overflow-y-auto bg-[#020306]/95 px-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-white backdrop-blur-xl"
+                className="fixed inset-0 z-[80] flex flex-col overflow-y-auto bg-[#020306]/95 px-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-white md:backdrop-blur-xl"
               >
                 <Dialog.Title className="sr-only">Menu</Dialog.Title>
                 <div className="flex h-12 items-center justify-between">
@@ -172,7 +172,7 @@ function Finale({ onExplore }) {
         <button
           type="button"
           onClick={onExplore}
-          className="inline-flex h-12 items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-5 text-[15px] text-white backdrop-blur transition-transform hover:bg-white/10 active:scale-[0.98]"
+          className="inline-flex h-12 items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-5 text-[15px] text-white md:backdrop-blur transition-transform hover:bg-white/10 active:scale-[0.98]"
         >
           Explore UWI <ArrowDown className="size-4" />
         </button>
@@ -233,7 +233,7 @@ function Copy({ id, onPlay, onExplore }) {
                 <button
                   type="button"
                   onClick={onPlay}
-                  className="inline-flex h-12 items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-5 text-[15px] text-white backdrop-blur transition-transform hover:bg-white/10 active:scale-[0.98]"
+                  className="inline-flex h-12 items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-5 text-[15px] text-white md:backdrop-blur transition-transform hover:bg-white/10 active:scale-[0.98]"
                 >
                   <Play weight="fill" className="size-3.5" /> Watch the story
                 </button>
@@ -323,7 +323,11 @@ export function Overlay({ chapters, revealed, faded }) {
     const tick = () => {
       const t = novaTime()
       const v = t <= 0 || t > 3 ? 0 : t < 0.07 ? t / 0.07 : Math.exp(-(t - 0.07) * 3.2)
-      if (flash.current) flash.current.style.opacity = String(v * 0.6)
+      if (flash.current) {
+        flash.current.style.opacity = String(v * 0.6)
+        // fully out of the compositor when invisible, so it never blends over the canvas
+        flash.current.style.visibility = v > 0 ? 'visible' : 'hidden'
+      }
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -338,8 +342,8 @@ export function Overlay({ chapters, revealed, faded }) {
       <motion.div
         aria-hidden="true"
         ref={flash}
-        style={{ opacity: 0 }}
-        className="pointer-events-none fixed inset-0 z-30 bg-[radial-gradient(circle_at_50%_50%,#fff,#e8f4ff_30%,#ffd1ec_60%,#9b7bff_90%)] mix-blend-screen"
+        style={{ opacity: 0, visibility: 'hidden' }}
+        className="pointer-events-none fixed inset-0 z-30 bg-[radial-gradient(circle_at_50%_50%,#fff,#e8f4ff_30%,#ffd1ec_60%,#9b7bff_90%)] md:mix-blend-screen"
       />
 
       <header className="fixed inset-x-0 top-0 z-50 flex h-[calc(4rem+env(safe-area-inset-top))] items-center justify-between gap-4 px-[max(1.25rem,env(safe-area-inset-left))] pt-[env(safe-area-inset-top)] sm:px-8">
@@ -347,7 +351,7 @@ export function Overlay({ chapters, revealed, faded }) {
           <LogoMark className="size-5" />
           <Wordmark />
         </Link>
-        <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-black/25 p-1 text-sm text-white/70 backdrop-blur-xl md:flex">
+        <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-black/25 p-1 text-sm text-white/70 md:backdrop-blur-xl md:flex">
           <button type="button" onClick={() => goTo(1)} className="rounded-full px-4 py-1.5 hover:text-white">
             Why UWI
           </button>
@@ -429,7 +433,7 @@ export function Overlay({ chapters, revealed, faded }) {
             type="button"
             onClick={play}
             aria-label={playing ? 'Pause' : 'Play'}
-            className="grid size-10 place-items-center rounded-full border border-white/15 bg-black/30 text-white backdrop-blur hover:bg-white/10"
+            className="grid size-10 place-items-center rounded-full border border-white/15 bg-black/50 md:bg-black/30 text-white md:backdrop-blur hover:bg-white/10"
           >
             {playing ? <Pause weight="fill" className="size-3.5" /> : <Play weight="fill" className="size-3.5" />}
           </button>
@@ -438,7 +442,7 @@ export function Overlay({ chapters, revealed, faded }) {
             onClick={toggleSound}
             aria-pressed={sound}
             aria-label={sound ? 'Sound off' : 'Sound on'}
-            className="flex h-10 items-center gap-2 rounded-full border border-white/15 bg-black/30 px-3.5 text-xs text-white/80 backdrop-blur hover:bg-white/10"
+            className="flex h-10 items-center gap-2 rounded-full border border-white/15 bg-black/50 md:bg-black/30 px-3.5 text-xs text-white/80 md:backdrop-blur hover:bg-white/10"
           >
             {sound ? <SpeakerHigh weight="fill" className="size-4" /> : <SpeakerSlash className="size-4" />}
             <span className="hidden sm:inline">{sound ? 'Sound on' : 'Sound off'}</span>
