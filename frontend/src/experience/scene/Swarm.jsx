@@ -83,9 +83,11 @@ export function Swarm({ count = 1800 }) {
       // each chip starts falling at a slightly different moment
       const k = smooth(seg(p, P.void - 0.07 + c.lag, P.collapse - 0.02 + c.lag * 0.4))
       const r0 = c.r + Math.sin(t * 0.6 + c.wobble) * 0.25
-      const r = THREE.MathUtils.lerp(r0, 1.0, k)
+      // free fall: slow to start, accelerating as it nears the horizon
+      const r = THREE.MathUtils.lerp(r0, 1.0, k * k)
       // angular speed grows sharply as they fall, like real orbits
-      const a = c.theta + t * c.speed * (1 + threat) + k * k * (14 + t * 2.2)
+      // Keplerian spin-up: angular speed grows as r^-1.5 on the way in
+      const a = c.theta + t * c.speed * (1 + threat) + k * t * 7 * Math.pow(Math.max(r, 1), -1.5)
       const shell = v.set(r * Math.sin(c.phi) * Math.cos(a), r * Math.cos(c.phi) * 0.6, r * Math.sin(c.phi) * Math.sin(a))
       // flatten into the disk plane as they get captured
       const flat = flatV.set(Math.cos(a) * r, Math.sin(a) * r, 0).applyQuaternion(tilt)
@@ -93,7 +95,7 @@ export function Swarm({ count = 1800 }) {
       dummy.rotation.set(t * c.spin.x + c.wobble, t * c.spin.y, t * c.spin.z + k * 3)
       const gone = smooth(seg(k, 0.82, 1))
       // tidal stretch on the way in
-      dummy.scale.set(c.size * (1 + k * 2.5) * (1 - gone), c.size * (1 - k * 0.6) * (1 - gone), 1)
+      dummy.scale.set(c.size * (1 + k * 0.9) * (1 - gone), c.size * (1 - k * 0.5) * (1 - gone), 1)
       dummy.updateMatrix()
       m.setMatrixAt(i, dummy.matrix)
     }

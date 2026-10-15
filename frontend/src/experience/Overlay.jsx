@@ -163,7 +163,7 @@ function Copy({ id, onPlay, onExplore }) {
 export function Overlay({ chapters }) {
   const { index, mode, playing, goTo, play, enterPage } = chapters
   const [sound, setSound] = useState(false)
-  const flash = useTransform(xpProgress, [NOVA - 0.012, NOVA + 0.004, NOVA + 0.035], [0, 1, 0])
+  const flash = useTransform(xpProgress, [NOVA - 0.006, NOVA + 0.002, NOVA + 0.03], [0, 0.55, 0])
   const id = CHAPTERS[index].id
 
   const toggleSound = async () => {
@@ -178,7 +178,7 @@ export function Overlay({ chapters }) {
 
   return (
     <>
-      <motion.div aria-hidden="true" style={{ opacity: flash }} className="pointer-events-none fixed inset-0 z-30 bg-[#fff6ec]" />
+      <motion.div aria-hidden="true" style={{ opacity: flash }} className="pointer-events-none fixed inset-0 z-30 bg-[radial-gradient(circle_at_50%_50%,#fff,#ffd1ec_35%,#9b7bff_75%,transparent)] mix-blend-screen" />
 
       <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between gap-4 px-5 sm:px-8">
         <Link to="/" onClick={() => goTo(0)} className="flex items-center gap-2 text-white" aria-label="UWI home">

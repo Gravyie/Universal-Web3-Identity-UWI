@@ -53,7 +53,7 @@ export default function Stage({ frameloop = 'always' }) {
         <Credential />
         <Portals />
         <EffectComposer multisampling={0} disableNormalPass>
-          <Bloom mipmapBlur intensity={1.1} luminanceThreshold={0.25} luminanceSmoothing={0.2} radius={0.78} />
+          <Bloom mipmapBlur intensity={0.85} luminanceThreshold={0.32} luminanceSmoothing={0.2} radius={0.78} />
           {!xp.mobile && <ChromaticAberration offset={ca} radialModulation modulationOffset={0.4} />}
           <Vignette eskil={false} offset={0.25} darkness={0.75} />
         </EffectComposer>

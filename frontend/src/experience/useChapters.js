@@ -3,55 +3,36 @@ import { CHAPTERS, NOVA } from './chapters'
 import { xp } from './store'
 import { score } from './score'
 
-// fast start, long soft landing: responds instantly, settles smoothly
-const easeInOutSine = (t) => 1 - Math.pow(1 - t, 3)
 const LAST = CHAPTERS.length - 1
+const STEP = 1 / LAST
+const PX_PER_CHAPTER = 420 // wheel distance that scrubs one chapter
+const SNAP_AFTER_MS = 140
 
 /**
- * Chapter navigation. In "chapters" mode the page is locked and every wheel
- * gesture, swipe or arrow key moves exactly one chapter. Moving past the last
- * chapter hands control to normal scrolling ("page" mode); scrolling back up
- * at the very top returns to the experience.
+ * Scroll scrubs the story continuously: wheel and touch move a target
+ * progress, the scene eases toward it every frame, and when input stops the
+ * target settles on the nearest chapter. Nothing ever locks, so a long
+ * continuous scroll flows straight through several chapters.
  */
 export function useChapters() {
   const [index, setIndex] = useState(0)
   const [mode, setMode] = useState('chapters')
   const [playing, setPlaying] = useState(false)
-  const [moving, setMoving] = useState(false)
+  const target = useRef(0)
   const idx = useRef(0)
-  const raf = useRef(0)
-  const animating = useRef(false)
-  const gestureLock = useRef(false)
-  const unlockTimer = useRef(0)
   const modeRef = useRef('chapters')
+  const lastDir = useRef(1)
+  const snapTimer = useRef(0)
+  const overflow = useRef(0)
+  if (import.meta.env.DEV) window.__xpTarget = target
 
-  const goTo = useCallback((target) => {
-    const i = Math.max(0, Math.min(LAST, target))
-    const from = idx.current
-    if (i === from) return
-    const forward = i > from
-    const dur = (xp.reduced ? 0.01 : (CHAPTERS[forward ? i : from].duration ?? 0.95) * (Math.abs(i - from) > 1 ? 1.2 : 1)) * 1000
-    const p0 = xp.progress
-    const p1 = CHAPTERS[i].p
-    cancelAnimationFrame(raf.current)
-    animating.current = true
-    setMoving(true)
-    const start = performance.now()
-    const tick = (now) => {
-      const k = Math.min(1, (now - start) / dur)
-      xp.progress = p0 + (p1 - p0) * easeInOutSine(k)
-      if (k < 1) raf.current = requestAnimationFrame(tick)
-      else {
-        animating.current = false
-        setMoving(false)
-      }
-    }
-    raf.current = requestAnimationFrame(tick)
-    idx.current = i
-    setIndex(i)
-    score.setScene(CHAPTERS[i].sound)
-    if (forward && p0 < NOVA && p1 > NOVA) score.nova(((NOVA - p0) / (p1 - p0)) * (dur / 1000))
-    else score.whoosh()
+  const snap = useCallback(() => {
+    target.current = Math.round(target.current / STEP + 0.36 * lastDir.current) * STEP
+    target.current = Math.min(1, Math.max(0, target.current))
+  }, [])
+
+  const goTo = useCallback((i) => {
+    target.current = Math.max(0, Math.min(LAST, i)) * STEP
   }, [])
 
   const enterPage = useCallback(() => {
@@ -71,15 +52,30 @@ export function useChapters() {
     document.documentElement.style.overflow = 'hidden'
   }, [])
 
-  const step = useCallback(
-    (dir) => {
-      // never block: a new gesture retargets from wherever the camera is
-      if (dir > 0 && idx.current === LAST && !animating.current) enterPage()
-      else if (dir > 0 && idx.current === LAST) return
-      else goTo(idx.current + dir)
-    },
-    [goTo, enterPage],
-  )
+  // Frame loop: ease progress toward target; derive chapter, sound and nova.
+  useEffect(() => {
+    let raf = 0
+    let last = performance.now()
+    const tick = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000)
+      last = now
+      const prev = xp.progress
+      const k = xp.reduced ? 1 : 1 - Math.exp(-dt * 5.5)
+      xp.progress = prev + (target.current - prev) * k
+      if (Math.abs(target.current - xp.progress) < 1e-4) xp.progress = target.current
+      if (prev < NOVA && xp.progress >= NOVA) score.nova(0.05)
+      const i = Math.round(xp.progress / STEP)
+      if (i !== idx.current) {
+        idx.current = i
+        setIndex(i)
+        score.setScene(CHAPTERS[i].sound)
+        score.whoosh()
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [])
 
   // Input
   useEffect(() => {
@@ -87,52 +83,58 @@ export function useChapters() {
     window.scrollTo(0, 0)
     let touchY = null
 
+    const scrub = (dy) => {
+      setPlaying(false)
+      lastDir.current = Math.sign(dy) || lastDir.current
+      // pushing past the last chapter releases into the page
+      if (target.current >= 1 && dy > 0) {
+        overflow.current += dy
+        if (overflow.current > 140) {
+          overflow.current = 0
+          enterPage()
+        }
+        return
+      }
+      overflow.current = 0
+      target.current = Math.min(1, Math.max(0, target.current + (dy / PX_PER_CHAPTER) * STEP))
+      clearTimeout(snapTimer.current)
+      snapTimer.current = setTimeout(snap, SNAP_AFTER_MS)
+    }
+
     const onWheel = (e) => {
       if (modeRef.current === 'page') {
         if (window.scrollY <= 0 && e.deltaY < -4) {
           e.preventDefault()
           enterChapters()
-          gestureLock.current = true
         }
         return
       }
       e.preventDefault()
-      // One gesture, one step: stay locked until the wheel has been quiet for
-      // a moment, which swallows trackpad momentum.
-      clearTimeout(unlockTimer.current)
-      unlockTimer.current = setTimeout(() => (gestureLock.current = false), 90)
-      if (gestureLock.current || Math.abs(e.deltaY) < 8) return
-      gestureLock.current = true
-      setPlaying(false)
-      step(e.deltaY > 0 ? 1 : -1)
+      const dy = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaY
+      scrub(dy)
     }
     const onTouchStart = (e) => (touchY = e.touches[0].clientY)
     const onTouchMove = (e) => {
-      if (modeRef.current === 'chapters') e.preventDefault()
-    }
-    const onTouchEnd = (e) => {
       if (touchY == null) return
-      const dy = touchY - e.changedTouches[0].clientY
-      touchY = null
-      if (Math.abs(dy) < 45) return
+      const y = e.touches[0].clientY
       if (modeRef.current === 'page') {
-        if (window.scrollY <= 0 && dy < 0) enterChapters()
+        if (window.scrollY <= 0 && y - touchY > 40) enterChapters()
         return
       }
-      setPlaying(false)
-      step(dy > 0 ? 1 : -1)
+      e.preventDefault()
+      scrub((touchY - y) * 2.2)
+      touchY = y
     }
+    const onTouchEnd = () => (touchY = null)
     const onKey = (e) => {
       if (modeRef.current === 'page' || e.target.closest?.('input, textarea, [role=dialog]')) return
-      if (['ArrowDown', 'PageDown', ' '].includes(e.key)) {
-        e.preventDefault()
-        setPlaying(false)
-        step(1)
-      } else if (['ArrowUp', 'PageUp'].includes(e.key)) {
-        e.preventDefault()
-        setPlaying(false)
-        step(-1)
-      }
+      const dir = ['ArrowDown', 'PageDown', ' '].includes(e.key) ? 1 : ['ArrowUp', 'PageUp'].includes(e.key) ? -1 : 0
+      if (!dir) return
+      e.preventDefault()
+      setPlaying(false)
+      const cur = Math.round(target.current / STEP)
+      if (dir > 0 && cur === LAST) enterPage()
+      else goTo(cur + dir)
     }
     window.addEventListener('wheel', onWheel, { passive: false })
     window.addEventListener('touchstart', onTouchStart, { passive: true })
@@ -145,30 +147,29 @@ export function useChapters() {
       window.removeEventListener('touchmove', onTouchMove)
       window.removeEventListener('touchend', onTouchEnd)
       window.removeEventListener('keydown', onKey)
-      cancelAnimationFrame(raf.current)
+      clearTimeout(snapTimer.current)
       document.documentElement.style.overflow = ''
       xp.inPage = false
     }
-  }, [step, enterChapters])
+  }, [snap, goTo, enterPage, enterChapters])
 
-  // Autoplay: hold each chapter long enough to read, then move on.
+  // Autoplay: hold each chapter long enough to read, then glide on.
   useEffect(() => {
-    if (!playing || moving || mode !== 'chapters') return
+    if (!playing || mode !== 'chapters') return
     if (index === LAST) {
       setPlaying(false)
       return
     }
-    const t = setTimeout(() => goTo(idx.current + 1), CHAPTERS[index].hold * 1000)
+    const t = setTimeout(() => goTo(index + 1), (CHAPTERS[index].hold + 0.6) * 1000)
     return () => clearTimeout(t)
-  }, [playing, moving, index, mode, goTo])
+  }, [playing, index, mode, goTo])
 
   const play = useCallback(() => {
     if (playing) return setPlaying(false)
-    if (idx.current === LAST) {
-      goTo(0)
-    }
+    if (idx.current === LAST) goTo(0)
+    else goTo(idx.current + 1)
     setPlaying(true)
   }, [playing, goTo])
 
-  return { index, mode, playing, moving, goTo, step, play, enterPage, enterChapters, setPlaying }
+  return { index, mode, playing, goTo, play, enterPage, enterChapters, setPlaying }
 }

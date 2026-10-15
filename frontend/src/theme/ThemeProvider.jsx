@@ -6,6 +6,8 @@ import { ACCENTS, FINISHES, MODES } from './options'
 
 const STORAGE_KEY = 'uwi:theme'
 const ThemeContext = createContext(null)
+const noop = () => {}
+const FALLBACK = { mode: 'dark', setMode: noop, accent: 'aurora', setAccent: noop, finish: 'holo', setFinish: noop, resolved: 'dark' }
 
 /** Appearance preferences: light/dark mode, accent colour and holo card finish. */
 export function ThemeProvider({ children }) {
@@ -40,7 +42,6 @@ export function ThemeProvider({ children }) {
 }
 
 export function useTheme() {
-  const ctx = useContext(ThemeContext)
-  if (!ctx) throw new Error('useTheme must be used inside ThemeProvider')
-  return ctx
+  // Portals into separate React roots (e.g. 3D HTML overlays) lose context; fall back to defaults.
+  return useContext(ThemeContext) ?? FALLBACK
 }
