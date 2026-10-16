@@ -8,8 +8,7 @@ import { HoloCard } from '../../components/holo/HoloCard'
 import { HERO_CARD } from '../heroCard'
 
 export const CARD_Y = 0.1
-export const CARD_W = 3.4
-export const CARD_H = CARD_W / 1.586
+const CARD_W = 3.4
 
 const world = new THREE.Vector3()
 
